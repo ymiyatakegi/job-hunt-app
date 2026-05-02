@@ -193,13 +193,38 @@
       overflow-wrap: anywhere;
     }
 
-    .day-head {
+    .day-summary {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
       padding: 12px;
       background: var(--surface-2);
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .day-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .day-summary::after {
+      content: "開く";
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .day-card[open] .day-summary::after {
+      content: "閉じる";
+    }
+
+    .day-brief {
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      gap: 10px;
     }
 
     .day-title {
@@ -272,11 +297,11 @@
       text-align: right;
     }
 
-    details {
+    .expense-details {
       border-top: 1px solid rgba(203, 216, 199, 0.75);
     }
 
-    summary {
+    .expense-details summary {
       min-height: 44px;
       padding: 12px;
       color: var(--accent-2);
@@ -455,7 +480,7 @@
       <div class="chart-wrap">
         <canvas id="savingsChart" width="720" height="360"></canvas>
         <div class="legend">
-          <div class="legend-item"><span class="swatch"></span>貯金増減</div>
+          <div class="legend-item"><span class="swatch"></span>2週間ごとの貯金増減</div>
           <div class="legend-item"><span class="swatch hours"></span>作業+向上時間</div>
         </div>
       </div>
@@ -463,7 +488,7 @@
         <table>
           <thead>
             <tr>
-              <th>月</th>
+              <th>期間</th>
               <th>収入</th>
               <th>支出</th>
               <th>増減</th>
@@ -477,11 +502,13 @@
   </main>
 
   <template id="dayTemplate">
-    <article class="day-card">
-      <div class="day-head">
-        <h2 class="day-title"></h2>
-        <p class="net"></p>
-      </div>
+    <details class="day-card">
+      <summary class="day-summary">
+        <span class="day-brief">
+          <span class="day-title"></span>
+          <span class="net"></span>
+        </span>
+      </summary>
       <div class="fields">
         <div class="field-grid">
           <label>
@@ -510,11 +537,11 @@
           <strong class="cumulative-net">0円</strong>
         </div>
       </div>
-      <details>
+      <details class="expense-details">
         <summary>支出明細</summary>
         <div class="expense-list"></div>
       </details>
-    </article>
+    </details>
   </template>
 
   <script>
@@ -735,9 +762,8 @@
       yearLabel.textContent = currentYear + "年";
       const rows = [];
       for (let month = 1; month <= 12; month += 1) {
-        const key = getMonthKey(currentYear, month);
-        const summary = getMonthSummary(key);
-        rows.push({ month, ...summary });
+        rows.push({ label: month + "月前半", shortLabel: month + "前", ...getPeriodSummary(currentYear, month, 1, 15) });
+        rows.push({ label: month + "月後半", shortLabel: month + "後", ...getPeriodSummary(currentYear, month, 16, daysInMonth(currentYear, month)) });
       }
       drawChart(rows);
       renderMonthRows(rows);
@@ -791,8 +817,10 @@
       ctx.font = "12px Yu Gothic UI, sans-serif";
       ctx.textAlign = "center";
       rows.forEach((row, index) => {
-        const x = pad.left + (plotW / 11) * index;
-        ctx.fillText(String(row.month), x, height - 14);
+        const x = pad.left + (plotW / Math.max(1, rows.length - 1)) * index;
+        if (index % 2 === 0) {
+          ctx.fillText(String(Math.floor(index / 2) + 1), x, height - 14);
+        }
       });
     }
 
@@ -803,7 +831,7 @@
       ctx.lineWidth = 3;
       ctx.beginPath();
       rows.forEach((row, index) => {
-        const x = pad.left + (plotW / 11) * index;
+        const x = pad.left + (plotW / Math.max(1, rows.length - 1)) * index;
         const y = pad.top + plotH - ((getter(row) - min) / range) * plotH;
         if (index === 0) {
           ctx.moveTo(x, y);
@@ -814,7 +842,7 @@
       ctx.stroke();
 
       rows.forEach((row, index) => {
-        const x = pad.left + (plotW / 11) * index;
+        const x = pad.left + (plotW / Math.max(1, rows.length - 1)) * index;
         const y = pad.top + plotH - ((getter(row) - min) / range) * plotH;
         ctx.beginPath();
         ctx.arc(x, y, 4, 0, Math.PI * 2);
@@ -833,7 +861,7 @@
       rows.forEach((row) => {
         const tr = document.createElement("tr");
         tr.innerHTML =
-          "<td>" + row.month + "月</td>" +
+          "<td>" + row.label + "</td>" +
           "<td>" + yen(row.income) + "</td>" +
           "<td>" + yen(row.expense) + "</td>" +
           "<td>" + yen(row.net) + "</td>" +
@@ -856,6 +884,26 @@
         sum.hours += Number(record.workHours || 0) + Number(record.improveHours || 0);
         return sum;
       }, { income: 0, expense: 0, net: 0, hours: 0 });
+    }
+
+    function getPeriodSummary(year, month, startDay, endDay) {
+      const monthData = data.months[getMonthKey(year, month)];
+      if (!monthData) {
+        return { income: 0, expense: 0, net: 0, hours: 0 };
+      }
+
+      const summary = { income: 0, expense: 0, net: 0, hours: 0 };
+      for (let day = startDay; day <= endDay; day += 1) {
+        const record = monthData.days[String(day)];
+        if (!record) continue;
+        const expense = sumExpenses(record.expenses);
+        const income = Number(record.income || 0);
+        summary.income += income;
+        summary.expense += expense;
+        summary.net += income - expense;
+        summary.hours += Number(record.workHours || 0) + Number(record.improveHours || 0);
+      }
+      return summary;
     }
 
     function ensureMonth(monthKey, year, month) {
