@@ -688,7 +688,7 @@
 
         const head = document.createElement("div");
         head.className = "card-head";
-        head.innerHTML = '<div class="card-title"><h2>' + escapeHtml(row.companyName || "企業名未入力") + '</h2><p>' + (index + 1) + '件目</p></div>';
+        head.innerHTML = '<div class="card-title"><h2 data-company-title="' + index + '">' + escapeHtml(row.companyName || "企業名未入力") + '</h2><p>' + (index + 1) + '件目</p></div>';
 
         const remove = document.createElement("button");
         remove.className = "danger";
@@ -771,7 +771,9 @@
       textarea.addEventListener("input", (event) => {
         rows[rowIndex][column.key] = event.target.value;
         saveRows();
-        if (column.key === "companyName") renderCompanies();
+        if (column.key === "companyName") {
+          updateCompanyTitle(rowIndex, event.target.value);
+        }
       });
       label.appendChild(textarea);
 
@@ -886,7 +888,7 @@
         card.className = "card";
         const head = document.createElement("div");
         head.className = "card-head";
-        head.innerHTML = '<div class="card-title"><h2>' + escapeHtml(row.siteName || "サイト名未入力") + '</h2><p>' + (index + 1) + '件目</p></div>';
+        head.innerHTML = '<div class="card-title"><h2 data-site-title="' + index + '">' + escapeHtml(row.siteName || "サイト名未入力") + '</h2><p>' + (index + 1) + '件目</p></div>';
 
         const remove = document.createElement("button");
         remove.className = "danger";
@@ -921,7 +923,9 @@
       textarea.addEventListener("input", (event) => {
         siteRows[rowIndex][column.key] = event.target.value;
         saveSiteRows();
-        if (column.key === "siteName") renderSites();
+        if (column.key === "siteName") {
+          updateSiteTitle(rowIndex, event.target.value);
+        }
       });
       label.appendChild(textarea);
 
@@ -936,6 +940,20 @@
         label.appendChild(link);
       }
       return label;
+    }
+
+    function updateCompanyTitle(rowIndex, value) {
+      const title = companyList.querySelector('[data-company-title="' + rowIndex + '"]');
+      if (title) {
+        title.textContent = value.trim() || "企業名未入力";
+      }
+    }
+
+    function updateSiteTitle(rowIndex, value) {
+      const title = siteList.querySelector('[data-site-title="' + rowIndex + '"]');
+      if (title) {
+        title.textContent = value.trim() || "サイト名未入力";
+      }
     }
 
     function openEventModal(dateValue, existing) {
