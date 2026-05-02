@@ -472,15 +472,15 @@
     <section id="savings" class="view">
       <div class="panel">
         <div class="month-row">
-          <button id="prevYear" class="secondary" type="button">前年</button>
+          <button id="prevYear" class="secondary" type="button">前の2週間</button>
           <div id="yearLabel" class="month-label"></div>
-          <button id="nextYear" class="secondary" type="button">翌年</button>
+          <button id="nextYear" class="secondary" type="button">次の2週間</button>
         </div>
       </div>
       <div class="chart-wrap">
         <canvas id="savingsChart" width="720" height="360"></canvas>
         <div class="legend">
-          <div class="legend-item"><span class="swatch"></span>2週間ごとの貯金増減</div>
+          <div class="legend-item"><span class="swatch"></span>1日ごとの貯金増減</div>
           <div class="legend-item"><span class="swatch hours"></span>作業+向上時間</div>
         </div>
       </div>
@@ -488,7 +488,7 @@
         <table>
           <thead>
             <tr>
-              <th>期間</th>
+              <th>日付</th>
               <th>収入</th>
               <th>支出</th>
               <th>増減</th>
@@ -562,6 +562,7 @@
     let data = loadData();
     let currentMonth = new Date();
     let currentYear = currentMonth.getFullYear();
+    let currentPeriodStart = startOfCurrentPeriod(new Date());
     currentMonth.setDate(1);
 
     init();
@@ -584,12 +585,14 @@
       });
 
       document.getElementById("prevYear").addEventListener("click", () => {
-        currentYear -= 1;
+        currentPeriodStart.setDate(currentPeriodStart.getDate() - 14);
+        currentYear = currentPeriodStart.getFullYear();
         renderSavings();
       });
 
       document.getElementById("nextYear").addEventListener("click", () => {
-        currentYear += 1;
+        currentPeriodStart.setDate(currentPeriodStart.getDate() + 14);
+        currentYear = currentPeriodStart.getFullYear();
         renderSavings();
       });
 
@@ -759,11 +762,18 @@
     }
 
     function renderSavings() {
-      yearLabel.textContent = currentYear + "年";
+      const periodEnd = new Date(currentPeriodStart);
+      periodEnd.setDate(currentPeriodStart.getDate() + 13);
+      yearLabel.textContent = formatPeriodLabel(currentPeriodStart, periodEnd);
       const rows = [];
-      for (let month = 1; month <= 12; month += 1) {
-        rows.push({ label: month + "月前半", shortLabel: month + "前", ...getPeriodSummary(currentYear, month, 1, 15) });
-        rows.push({ label: month + "月後半", shortLabel: month + "後", ...getPeriodSummary(currentYear, month, 16, daysInMonth(currentYear, month)) });
+      for (let offset = 0; offset < 14; offset += 1) {
+        const date = new Date(currentPeriodStart);
+        date.setDate(currentPeriodStart.getDate() + offset);
+        rows.push({
+          label: (date.getMonth() + 1) + "/" + date.getDate(),
+          shortLabel: String(date.getDate()),
+          ...getDaySummary(date)
+        });
       }
       drawChart(rows);
       renderMonthRows(rows);
@@ -818,9 +828,7 @@
       ctx.textAlign = "center";
       rows.forEach((row, index) => {
         const x = pad.left + (plotW / Math.max(1, rows.length - 1)) * index;
-        if (index % 2 === 0) {
-          ctx.fillText(String(Math.floor(index / 2) + 1), x, height - 14);
-        }
+        ctx.fillText(row.shortLabel, x, height - 14);
       });
     }
 
@@ -886,6 +894,23 @@
       }, { income: 0, expense: 0, net: 0, hours: 0 });
     }
 
+    function getDaySummary(date) {
+      const monthKey = getMonthKey(date.getFullYear(), date.getMonth() + 1);
+      const monthData = data.months[monthKey];
+      const record = monthData ? monthData.days[String(date.getDate())] : null;
+      if (!record) {
+        return { income: 0, expense: 0, net: 0, hours: 0 };
+      }
+      const expense = sumExpenses(record.expenses);
+      const income = Number(record.income || 0);
+      return {
+        income,
+        expense,
+        net: income - expense,
+        hours: Number(record.workHours || 0) + Number(record.improveHours || 0)
+      };
+    }
+
     function getPeriodSummary(year, month, startDay, endDay) {
       const monthData = data.months[getMonthKey(year, month)];
       if (!monthData) {
@@ -904,6 +929,20 @@
         summary.hours += Number(record.workHours || 0) + Number(record.improveHours || 0);
       }
       return summary;
+    }
+
+    function startOfCurrentPeriod(date) {
+      const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      start.setDate(start.getDate() - ((start.getDate() - 1) % 14));
+      return start;
+    }
+
+    function formatPeriodLabel(start, end) {
+      return start.getFullYear() + "年" +
+        String(start.getMonth() + 1).padStart(2, "0") + "/" +
+        String(start.getDate()).padStart(2, "0") + "〜" +
+        String(end.getMonth() + 1).padStart(2, "0") + "/" +
+        String(end.getDate()).padStart(2, "0");
     }
 
     function ensureMonth(monthKey, year, month) {
