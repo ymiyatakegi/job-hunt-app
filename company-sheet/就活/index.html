@@ -1,0 +1,1462 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>就活企業情報シート</title>
+  <style>
+    :root {
+      --bg: #f4efe7;
+      --surface: #fffaf3;
+      --surface-2: #f7eedf;
+      --line: #dbc8ab;
+      --text: #2e2419;
+      --muted: #6b5f52;
+      --accent: #176b63;
+      --accent-2: #0f4c47;
+      --danger: #b42318;
+      --row-blue: #eaf3ff;
+      --row-blue-sticky: #dcecff;
+      --row-orange: #fff2e4;
+      --row-orange-sticky: #ffe4c7;
+      --row-alert: #fde8e8;
+      --row-alert-sticky: #f8caca;
+      --small: 160px;
+      --medium: 240px;
+      --large: 360px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+
+    body {
+      font-family: "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(23, 107, 99, 0.16), transparent 24%),
+        radial-gradient(circle at top right, rgba(173, 141, 96, 0.18), transparent 22%),
+        linear-gradient(180deg, #faf6ef 0%, var(--bg) 100%);
+    }
+
+    .app { padding: 28px; }
+
+    .hero,
+    .panel {
+      background: rgba(255, 250, 243, 0.92);
+      border: 1px solid rgba(173, 141, 96, 0.24);
+      border-radius: 24px;
+      box-shadow: 0 18px 40px rgba(79, 55, 26, 0.12);
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: end;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 2vw + 1.2rem, 3rem);
+      line-height: 1.15;
+    }
+
+    .hero p:last-child {
+      margin: 10px 0 0;
+      color: var(--muted);
+      max-width: 760px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font: inherit;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-weight: 700;
+      transition: transform 0.14s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    .primary {
+      color: #fff;
+      border: 1px solid transparent;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    }
+
+    .secondary {
+      color: var(--text);
+      border: 1px solid var(--line);
+      background: #fffdf9;
+    }
+
+    .danger {
+      color: var(--danger);
+      border: 1px solid rgba(180, 35, 24, 0.2);
+      background: rgba(180, 35, 24, 0.08);
+      padding: 8px 12px;
+    }
+
+    .panel { padding: 18px; }
+
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .meta p { margin: 0; }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 72vh;
+      border: 1px solid rgba(173, 141, 96, 0.28);
+      border-radius: 18px;
+      background: var(--surface);
+    }
+
+    table {
+      width: max-content;
+      min-width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    th, td {
+      border-right: 1px solid rgba(173, 141, 96, 0.28);
+      border-bottom: 1px solid rgba(173, 141, 96, 0.28);
+      vertical-align: top;
+      background: rgba(255, 251, 246, 0.88);
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 14px 12px;
+      text-align: left;
+      background: var(--surface-2);
+      font-size: 0.95rem;
+    }
+
+    tbody tr:nth-child(odd) td {
+      background: var(--row-blue);
+    }
+
+    tbody tr:nth-child(even) td {
+      background: var(--row-orange);
+    }
+
+    tbody tr.is-stale td {
+      background: var(--row-alert);
+    }
+
+    th:last-child, td:last-child { border-right: 0; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .small { width: var(--small); min-width: var(--small); }
+    .medium { width: var(--medium); min-width: var(--medium); }
+    .large { width: var(--large); min-width: var(--large); }
+    .action { width: 92px; min-width: 92px; }
+
+    .sticky-company {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      box-shadow: 8px 0 18px rgba(46, 36, 25, 0.08);
+    }
+
+    thead .sticky-company {
+      z-index: 4;
+      background: #efdfc5;
+    }
+
+    tbody tr:nth-child(odd) .sticky-company {
+      background: var(--row-blue-sticky);
+    }
+
+    tbody tr:nth-child(even) .sticky-company {
+      background: var(--row-orange-sticky);
+    }
+
+    tbody tr.is-stale .sticky-company {
+      background: var(--row-alert-sticky);
+    }
+
+    .cell {
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .cell-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .es-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .toggle-button {
+      min-width: 36px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(23, 107, 99, 0.2);
+      background: rgba(23, 107, 99, 0.08);
+      color: var(--accent-2);
+      font-weight: 700;
+    }
+
+    .is-hidden {
+      display: none;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 126px;
+      border: 1px solid rgba(173, 141, 96, 0.38);
+      border-radius: 14px;
+      padding: 10px 12px;
+      resize: vertical;
+      background: rgba(255, 253, 250, 0.96);
+      color: var(--text);
+      font: inherit;
+      line-height: 1.55;
+    }
+
+    textarea:focus {
+      outline: 2px solid rgba(23, 107, 99, 0.18);
+      border-color: var(--accent);
+    }
+
+    .site-textarea {
+      min-height: 58px;
+      padding: 7px 10px;
+      line-height: 1.35;
+    }
+
+
+    .es-question {
+      min-height: 72px;
+    }
+
+    .es-answer {
+      min-height: 160px;
+      padding-bottom: 28px;
+    }
+
+    .count-wrap {
+      position: relative;
+    }
+
+    .char-count {
+      position: absolute;
+      right: 12px;
+      bottom: 10px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      background: rgba(255, 250, 243, 0.82);
+      padding: 2px 6px;
+      border-radius: 999px;
+      pointer-events: none;
+    }
+
+    a.cell-link {
+      color: var(--accent-2);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    a.cell-link:hover { text-decoration: underline; }
+
+
+    .schedule-panel,
+    .modal-card {
+      background: rgba(255, 250, 243, 0.92);
+      border: 1px solid rgba(173, 141, 96, 0.24);
+      border-radius: 24px;
+      box-shadow: 0 18px 40px rgba(79, 55, 26, 0.12);
+    }
+
+    .schedule-panel {
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+
+    .schedule-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .schedule-title h2,
+    .schedule-title p,
+    .day-number,
+    .empty-note,
+    .modal-head h3,
+    .modal-head p,
+    .field p {
+      margin: 0;
+    }
+
+    .schedule-title h2 {
+      color: var(--text);
+      font-size: 1.35rem;
+    }
+
+    .schedule-title p {
+      margin-top: 6px;
+      color: var(--muted);
+    }
+
+    .schedule-nav,
+    .schedule-legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .month-label {
+      min-width: 180px;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      align-self: center;
+    }
+
+    .schedule-legend {
+      margin-top: 8px;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .legend-chip,
+    .event-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .legend-chip::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.85;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .weekday,
+    .day-card {
+      border: 1px solid rgba(173, 141, 96, 0.24);
+      border-radius: 18px;
+      background: rgba(255, 252, 247, 0.9);
+    }
+
+    .weekday {
+      padding: 10px 12px;
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .day-card {
+      min-height: 148px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .day-card.is-outside {
+      opacity: 0.45;
+      background: rgba(244, 239, 231, 0.72);
+    }
+
+    .day-card.is-today {
+      border-color: rgba(23, 107, 99, 0.4);
+      box-shadow: inset 0 0 0 1px rgba(23, 107, 99, 0.18);
+    }
+
+    .day-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .add-event-button {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(23, 107, 99, 0.2);
+      background: rgba(23, 107, 99, 0.08);
+      color: var(--accent-2);
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .day-events {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .event-chip {
+      width: 100%;
+      justify-content: flex-start;
+      border: 0;
+      color: #fff;
+      text-align: left;
+      border-radius: 10px;
+      padding: 2px 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .event-chip small {
+      opacity: 0.85;
+      font-size: 0.7rem;
+    }
+
+    .empty-note {
+      color: #9a8f80;
+      font-size: 0.8rem;
+      padding-top: 6px;
+    }
+
+    .modal.is-hidden {
+      display: none;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(46, 36, 25, 0.32);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 20;
+    }
+
+    .modal-card {
+      width: min(100%, 560px);
+      padding: 20px;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 16px;
+    }
+
+    .icon-button {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: #fffdf9;
+      color: var(--text);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field p {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .event-chip.is-es-lg { background: #d1495b; }
+    .event-chip.is-es-md { background: #f08a5d; }
+    .event-chip.is-es-sm { background: #f6bd60; color: #3a2a14; }
+    .event-chip.is-test { background: #6d597a; }
+    .event-chip.is-interview { background: #2a9d8f; }
+    .event-chip.is-briefing { background: #457b9d; }
+    .event-chip.is-sponsor { background: #b56576; }
+    .event-chip.is-advisor { background: #7f5539; }
+    .event-chip.is-other { background: #6c757d; }
+
+
+    @media (max-width: 920px) {
+      .app { padding: 18px; }
+      .hero,
+      .schedule-head { flex-direction: column; align-items: stretch; }
+      .calendar-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .weekday { display: none; }
+      .form-grid { grid-template-columns: 1fr; }
+      .month-label { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Company Sheet</p>
+        <h1>就活企業情報管理</h1>
+        <p>入力内容はこのブラウザに自動保存</p>
+      </div>
+      <div class="actions">
+        <button id="addRow" class="primary" type="button">企業を追加</button>
+        <button id="resetAll" class="secondary" type="button">全消去</button>
+      </div>
+    </section>
+
+
+
+    <section class="panel">
+      <div class="meta">
+        <div class="search-box">
+          <label for="companySearch">企業名検索</label>
+          <input id="companySearch" type="text" placeholder="企業名で絞り込み">
+        </div>
+        <p id="status">保存済み</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr id="headRow"></tr>
+          </thead>
+          <tbody id="bodyRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    
+
+    <section class="schedule-panel">
+      <div class="schedule-head">
+        <div class="schedule-title">
+          <h2>&#26376;&#12372;&#12392;&#12398;&#12473;&#12465;&#12472;&#12517;&#12540;&#12523;&#24115;</h2>
+          <p>&#21508;&#26085;&#12398;&#23567;&#12373;&#12356;&#65291;&#12363;&#12425;&#20104;&#23450;&#12434;&#36861;&#21152;&#12391;&#12365;&#12414;&#12377;&#12290;&#20104;&#23450;&#12399;&#33394;&#20184;&#12365;&#12398;&#27178;&#38263;&#12459;&#12540;&#12489;&#12391;&#34920;&#31034;&#12373;&#12428;&#12414;&#12377;&#12290;</p>
+        </div>
+        <div class="schedule-nav">
+          <button id="prevMonth" class="secondary" type="button">&#21069;&#12398;&#26376;</button>
+          <div id="monthLabel" class="month-label"></div>
+          <button id="nextMonth" class="secondary" type="button">&#27425;&#12398;&#26376;</button>
+        </div>
+      </div>
+      <div id="scheduleLegend" class="schedule-legend"></div>
+      <div id="calendarGrid" class="calendar-grid"></div>
+    </section>
+
+    
+  <section class="panel site-list-panel">
+      <div class="meta">
+        <p>サイト情報一覧</p>
+        <div class="actions">
+          <button id="addSiteRow" class="primary" type="button">サイトを追加</button>
+          <button id="resetSiteRows" class="secondary" type="button">サイト一覧を全消去</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr id="siteHeadRow"></tr>
+          </thead>
+          <tbody id="siteBodyRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="eventModal" class="modal is-hidden" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h3>&#20104;&#23450;&#12434;&#36861;&#21152;</h3>
+          <p id="modalDateLabel"></p>
+        </div>
+        <button id="closeModal" class="icon-button" type="button">&times;</button>
+      </div>
+      <form id="eventForm">
+        <div class="form-grid">
+          <label class="field">
+            <p>&#26085;&#20184;</p>
+            <input id="eventDate" type="date" required>
+          </label>
+          <label class="field">
+            <p>&#31278;&#21029;</p>
+            <select id="eventCategory" required></select>
+          </label>
+          <label class="field full">
+            <p>&#20104;&#23450;&#21517;</p>
+            <input id="eventTitle" type="text" placeholder="&#20363;: &#12295;&#12295;&#21830;&#20107; ES&#25552;&#20986;" required>
+          </label>
+          <label class="field full">
+            <p>&#12513;&#12514;</p>
+            <textarea id="eventNote" placeholder="&#35443;&#32048;&#12420;&#25345;&#12385;&#29289;&#12394;&#12393;"></textarea>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button id="deleteEvent" class="danger is-hidden" type="button">&#21066;&#38500;</button>
+          <div class="actions">
+            <button id="cancelModal" class="secondary" type="button">&#12461;&#12515;&#12531;&#12475;&#12523;</button>
+            <button class="primary" type="submit">&#20445;&#23384;</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "job-hunt-company-sheet-v4";
+    const SCHEDULE_STORAGE_KEY = "job-hunt-month-schedule-v1";
+    const SITE_STORAGE_KEY = "job-hunt-site-list-v1";
+    const columns = [
+      { key: "companyName", label: "企業名", size: "small", sticky: true },
+      { key: "recruitPage", label: "採用ページ", size: "medium", url: true },
+      { key: "userName", label: "ユーザー名", size: "small" },
+      { key: "motivation", label: "志望動機", size: "large" },
+      { key: "homePage", label: "ホームページ", size: "medium", url: true },
+      { key: "salary", label: "年収", size: "small" },
+      { key: "averageTenure", label: "平均勤続年数", size: "small" },
+      { key: "companySize", label: "企業規模", size: "small" },
+      { key: "business", label: "事業内容", size: "large" },
+      { key: "internDeadline", label: "インターン締め切り", size: "small" },
+      { key: "mynavi", label: "マイナビ", size: "medium", url: true },
+      { key: "oneCareer", label: "ワンキャリ", size: "medium", url: true },
+      { key: "internFlow", label: "インターン選考フロー", size: "medium" },
+      { key: "postInternFlow", label: "インターン後選考フロー", size: "medium" },
+      { key: "mainFlow", label: "本選考フロー", size: "medium" },
+      { key: "es1", label: "ES質問1", size: "large", es: true },
+      { key: "es2", label: "ES質問2", size: "large", es: true },
+      { key: "es3", label: "ES質問3", size: "large", es: true }
+    ];
+
+    const siteColumns = [
+      { key: "siteName", label: "サイト名", size: "medium" },
+      { key: "siteUrl", label: "URL", size: "medium", url: true },
+      { key: "siteDetail", label: "サイト詳細", size: "large" }
+    ];
+
+    const scheduleCategories = [
+      { value: "es-lg", label: "ES締め切り(大)", className: "is-es-lg", color: "#d1495b" },
+      { value: "es-md", label: "ES締め切り(中)", className: "is-es-md", color: "#f08a5d" },
+      { value: "es-sm", label: "ES締め切り(小)", className: "is-es-sm", color: "#f6bd60" },
+      { value: "test", label: "テスト締め切り", className: "is-test", color: "#6d597a" },
+      { value: "interview", label: "面接", className: "is-interview", color: "#2a9d8f" },
+      { value: "briefing", label: "企業説明", className: "is-briefing", color: "#457b9d" },
+      { value: "sponsor", label: "協賛", className: "is-sponsor", color: "#b56576" },
+      { value: "advisor", label: "アドバイザー", className: "is-advisor", color: "#7f5539" },
+      { value: "other", label: "その他", className: "is-other", color: "#6c757d" }
+    ];
+
+    const headRow = document.getElementById("headRow");
+    const bodyRows = document.getElementById("bodyRows");
+    const addRowButton = document.getElementById("addRow");
+    const resetAllButton = document.getElementById("resetAll");
+    const statusNode = document.getElementById("status");
+    const companySearchInput = document.getElementById("companySearch");
+    const calendarGrid = document.getElementById("calendarGrid");
+    const monthLabel = document.getElementById("monthLabel");
+    const prevMonthButton = document.getElementById("prevMonth");
+    const nextMonthButton = document.getElementById("nextMonth");
+    const scheduleLegend = document.getElementById("scheduleLegend");
+    const eventModal = document.getElementById("eventModal");
+    const closeModalButton = document.getElementById("closeModal");
+    const cancelModalButton = document.getElementById("cancelModal");
+    const eventForm = document.getElementById("eventForm");
+    const eventDateInput = document.getElementById("eventDate");
+    const eventCategorySelect = document.getElementById("eventCategory");
+    const eventTitleInput = document.getElementById("eventTitle");
+    const eventNoteInput = document.getElementById("eventNote");
+    const modalDateLabel = document.getElementById("modalDateLabel");
+    const deleteEventButton = document.getElementById("deleteEvent");
+    const siteHeadRow = document.getElementById("siteHeadRow");
+    const siteBodyRows = document.getElementById("siteBodyRows");
+    const addSiteRowButton = document.getElementById("addSiteRow");
+    const resetSiteRowsButton = document.getElementById("resetSiteRows");
+
+    let rows = loadRows();
+    let siteRows = loadSiteRows();
+    let schedules = loadSchedules();
+    let currentMonth = new Date();
+    currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+    let editingEventId = null;
+    let companySearchQuery = "";
+
+    renderLegend();
+    render();
+    renderSiteTable();
+    renderCalendar();
+    updateStatus();
+
+    if (companySearchInput) {
+      companySearchInput.addEventListener("input", (event) => {
+        companySearchQuery = event.target.value.trim().toLowerCase();
+        render();
+      });
+    }
+
+    addRowButton.addEventListener("click", () => {
+      rows.push(emptyRow());
+      render();
+      saveRows();
+    });
+
+    addSiteRowButton.addEventListener("click", () => {
+      siteRows.push(emptySiteRow());
+      renderSiteTable();
+      saveSiteRows();
+    });
+
+    resetSiteRowsButton.addEventListener("click", () => {
+      if (!window.confirm("サイト一覧をすべて削除します。よろしいですか？")) {
+        return;
+      }
+      siteRows = [emptySiteRow()];
+      renderSiteTable();
+      saveSiteRows();
+    });
+
+    prevMonthButton.addEventListener("click", () => {
+      currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+      renderCalendar();
+    });
+
+    nextMonthButton.addEventListener("click", () => {
+      currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+      renderCalendar();
+    });
+
+    closeModalButton.addEventListener("click", closeModal);
+    cancelModalButton.addEventListener("click", closeModal);
+    eventModal.addEventListener("click", (event) => {
+      if (event.target === eventModal) {
+        closeModal();
+      }
+    });
+
+    deleteEventButton.addEventListener("click", () => {
+      if (!editingEventId) {
+        return;
+      }
+      schedules = schedules.filter((item) => item.id !== editingEventId);
+      saveSchedules();
+      renderCalendar();
+      closeModal();
+    });
+
+    eventForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const payload = {
+        id: editingEventId || String(Date.now()),
+        date: eventDateInput.value,
+        category: eventCategorySelect.value,
+        title: eventTitleInput.value.trim(),
+        note: eventNoteInput.value.trim()
+      };
+
+      if (!payload.date || !payload.category || !payload.title) {
+        return;
+      }
+
+      const existingIndex = schedules.findIndex((item) => item.id === payload.id);
+      if (existingIndex >= 0) {
+        schedules[existingIndex] = payload;
+      } else {
+        schedules.push(payload);
+      }
+
+      schedules.sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title, "ja"));
+      saveSchedules();
+      renderCalendar();
+      closeModal();
+    });
+
+    resetAllButton.addEventListener("click", () => {
+      if (!window.confirm("入力済みデータをすべて削除します。よろしいですか？")) {
+        return;
+      }
+      rows = [emptyRow()];
+      render();
+      saveRows();
+    });
+
+
+    function renderSiteTable() {
+      renderSiteHead();
+      siteBodyRows.innerHTML = "";
+
+      siteRows.forEach((row, rowIndex) => {
+        const tr = document.createElement("tr");
+
+        siteColumns.forEach((column) => {
+          const td = document.createElement("td");
+          td.className = column.size;
+          td.appendChild(createSiteCell(row, rowIndex, column));
+          tr.appendChild(td);
+        });
+
+        const actionTd = document.createElement("td");
+        actionTd.className = "action";
+        const actionWrap = document.createElement("div");
+        actionWrap.className = "cell";
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "danger";
+        removeButton.textContent = "削除";
+        removeButton.addEventListener("click", () => {
+          siteRows.splice(rowIndex, 1);
+          if (siteRows.length === 0) {
+            siteRows = [emptySiteRow()];
+          }
+          renderSiteTable();
+          saveSiteRows();
+        });
+        actionWrap.appendChild(removeButton);
+        actionTd.appendChild(actionWrap);
+        tr.appendChild(actionTd);
+
+        siteBodyRows.appendChild(tr);
+      });
+    }
+
+    function renderSiteHead() {
+      siteHeadRow.innerHTML = "";
+      siteColumns.forEach((column) => {
+        const th = document.createElement("th");
+        th.className = column.size;
+        th.textContent = column.label;
+        siteHeadRow.appendChild(th);
+      });
+      const actionTh = document.createElement("th");
+      actionTh.className = "action";
+      actionTh.textContent = "操作";
+      siteHeadRow.appendChild(actionTh);
+    }
+
+    function createSiteCell(row, rowIndex, column) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+
+      const textarea = document.createElement("textarea");
+      textarea.className = "site-textarea";
+      textarea.value = row[column.key] || "";
+      textarea.setAttribute("aria-label", column.label + " ????? " + (rowIndex + 1) + "??");
+      fit(textarea);
+
+      textarea.addEventListener("input", (event) => {
+        siteRows[rowIndex][column.key] = event.target.value;
+        fit(event.target);
+        updateCellExtras(cell, row, column, event.target.value);
+        saveSiteRows();
+      });
+
+      cell.appendChild(textarea);
+      updateCellExtras(cell, row, column, textarea.value);
+      return cell;
+    }
+
+    function renderLegend() {
+      scheduleLegend.innerHTML = "";
+      scheduleCategories.forEach((category) => {
+        const item = document.createElement("div");
+        item.className = "legend-chip";
+        item.textContent = category.label;
+        item.style.color = category.color;
+        scheduleLegend.appendChild(item);
+      });
+
+      eventCategorySelect.innerHTML = "";
+      scheduleCategories.forEach((category) => {
+        const option = document.createElement("option");
+        option.value = category.value;
+        option.textContent = category.label;
+        eventCategorySelect.appendChild(option);
+      });
+    }
+
+    function renderCalendar() {
+      calendarGrid.innerHTML = "";
+      monthLabel.textContent = currentMonth.getFullYear() + "\u5e74" + String(currentMonth.getMonth() + 1).padStart(2, "0") + "\u6708";
+
+      ["\u65e5", "\u6708", "\u706b", "\u6c34", "\u6728", "\u91d1", "\u571f"].forEach((weekday) => {
+        const node = document.createElement("div");
+        node.className = "weekday";
+        node.textContent = weekday;
+        calendarGrid.appendChild(node);
+      });
+
+      const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      const startDate = new Date(firstDay);
+      startDate.setDate(firstDay.getDate() - firstDay.getDay());
+
+      const currentMonthIndex = currentMonth.getMonth();
+      const needsSixthRow = (() => {
+        const rowStart = new Date(startDate);
+        rowStart.setDate(startDate.getDate() + 35);
+        for (let offset = 0; offset < 7; offset += 1) {
+          const checkDate = new Date(rowStart);
+          checkDate.setDate(rowStart.getDate() + offset);
+          if (checkDate.getMonth() === currentMonthIndex) {
+            return true;
+          }
+        }
+        return false;
+      })();
+
+      const totalCells = needsSixthRow ? 42 : 35;
+      for (let index = 0; index < totalCells; index += 1) {
+        const cellDate = new Date(startDate);
+        cellDate.setDate(startDate.getDate() + index);
+        calendarGrid.appendChild(createDayCard(cellDate));
+      }
+    }
+
+    function createDayCard(date) {
+      const card = document.createElement("div");
+      card.className = "day-card";
+
+      if (date.getMonth() !== currentMonth.getMonth()) {
+        card.classList.add("is-outside");
+      }
+      if (isSameDate(date, new Date())) {
+        card.classList.add("is-today");
+      }
+
+      const top = document.createElement("div");
+      top.className = "day-top";
+      const number = document.createElement("p");
+      number.className = "day-number";
+      number.textContent = String(date.getDate());
+      top.appendChild(number);
+
+      const plusButton = document.createElement("button");
+      plusButton.type = "button";
+      plusButton.className = "add-event-button";
+      plusButton.textContent = "+";
+      plusButton.addEventListener("click", () => openModal(formatDate(date)));
+      top.appendChild(plusButton);
+      card.appendChild(top);
+
+      const eventsWrap = document.createElement("div");
+      eventsWrap.className = "day-events";
+      const dayEvents = schedules.filter((item) => item.date === formatDate(date));
+
+      if (dayEvents.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "empty-note";
+        empty.textContent = "\u4e88\u5b9a\u306a\u3057";
+        eventsWrap.appendChild(empty);
+      } else {
+        dayEvents.forEach((eventItem) => {
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = "event-chip " + categoryMeta(eventItem.category).className;
+          chip.title = eventItem.note || eventItem.title;
+          chip.innerHTML = '<span>' + escapeHtml(eventItem.title) + '</span><small>' + escapeHtml(categoryMeta(eventItem.category).label) + '</small>';
+          chip.addEventListener("click", () => openModal(eventItem.date, eventItem));
+          eventsWrap.appendChild(chip);
+        });
+      }
+
+      card.appendChild(eventsWrap);
+      return card;
+    }
+
+    function openModal(dateValue, existingEvent) {
+      editingEventId = existingEvent ? existingEvent.id : null;
+      eventDateInput.value = dateValue;
+      eventCategorySelect.value = existingEvent ? existingEvent.category : scheduleCategories[0].value;
+      eventTitleInput.value = existingEvent ? existingEvent.title : "";
+      eventNoteInput.value = existingEvent ? existingEvent.note : "";
+      modalDateLabel.textContent = formatDateLabel(dateValue);
+      deleteEventButton.classList.toggle("is-hidden", !existingEvent);
+      eventModal.classList.remove("is-hidden");
+      eventModal.setAttribute("aria-hidden", "false");
+      eventTitleInput.focus();
+    }
+
+    function closeModal() {
+      editingEventId = null;
+      eventForm.reset();
+      eventCategorySelect.value = scheduleCategories[0].value;
+      eventModal.classList.add("is-hidden");
+      eventModal.setAttribute("aria-hidden", "true");
+    }
+
+    function categoryMeta(value) {
+      return scheduleCategories.find((item) => item.value === value) || scheduleCategories[scheduleCategories.length - 1];
+    }
+
+    function formatDate(date) {
+      return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0");
+    }
+
+    function formatDateLabel(value) {
+      const [year, month, day] = value.split("-");
+      return year + "\u5e74" + month + "\u6708" + day + "\u65e5";
+    }
+
+    function isSameDate(left, right) {
+      return left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth() && left.getDate() === right.getDate();
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+
+    function render() {
+      renderHead();
+      bodyRows.innerHTML = "";
+
+      rows.forEach((row, rowIndex) => {
+        const companyName = String(row.companyName || "").toLowerCase();
+        if (companySearchQuery && !companyName.includes(companySearchQuery)) {
+          return;
+        }
+
+        const tr = document.createElement("tr");
+        if (isRecruitPageStale(row.recruitPageLastOpened)) {
+          tr.classList.add("is-stale");
+        }
+
+        columns.forEach((column) => {
+          const td = document.createElement("td");
+          td.className = column.size + (column.sticky ? " sticky-company" : "");
+
+          if (column.es) {
+            td.appendChild(createEsCell(row, rowIndex, column));
+          } else {
+            td.appendChild(createStandardCell(row, rowIndex, column));
+          }
+
+          tr.appendChild(td);
+        });
+
+        const actionTd = document.createElement("td");
+        actionTd.className = "action";
+        const actionWrap = document.createElement("div");
+        actionWrap.className = "cell";
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "danger";
+        removeButton.textContent = "削除";
+        removeButton.addEventListener("click", () => {
+          rows.splice(rowIndex, 1);
+          if (rows.length === 0) {
+            rows = [emptyRow()];
+          }
+          render();
+          saveRows();
+        });
+        actionWrap.appendChild(removeButton);
+        actionTd.appendChild(actionWrap);
+        tr.appendChild(actionTd);
+
+        bodyRows.appendChild(tr);
+      });
+    }
+
+    function createStandardCell(row, rowIndex, column) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+
+      const textarea = document.createElement("textarea");
+      textarea.value = row[column.key] || "";
+      textarea.setAttribute("aria-label", column.label + " " + (rowIndex + 1) + "行目");
+      fit(textarea);
+
+      textarea.addEventListener("input", (event) => {
+        rows[rowIndex][column.key] = event.target.value;
+        fit(event.target);
+        updateCellExtras(cell, row, column, event.target.value);
+        saveRows();
+      });
+
+      cell.appendChild(textarea);
+      updateCellExtras(cell, row, column, textarea.value);
+      return cell;
+    }
+
+    function createEsCell(row, rowIndex, column) {
+      ensureEsShape(row, column.key);
+
+      const cell = document.createElement("div");
+      cell.className = "cell";
+
+      const header = document.createElement("div");
+      header.className = "es-header";
+
+      const questionLabel = document.createElement("div");
+      questionLabel.className = "cell-label";
+      questionLabel.textContent = "質問";
+      header.appendChild(questionLabel);
+
+      const toggleButton = document.createElement("button");
+      toggleButton.type = "button";
+      toggleButton.className = "toggle-button";
+      toggleButton.textContent = row[column.key].expanded ? "▲" : "▼";
+      header.appendChild(toggleButton);
+      cell.appendChild(header);
+
+      const questionArea = document.createElement("textarea");
+      questionArea.className = "es-question";
+      questionArea.value = row[column.key].question || "";
+      questionArea.setAttribute("aria-label", column.label + " の質問 " + (rowIndex + 1) + "行目");
+      fit(questionArea);
+      questionArea.addEventListener("input", (event) => {
+        ensureEsShape(row, column.key);
+        row[column.key].question = event.target.value;
+        fit(event.target);
+        saveRows();
+      });
+      cell.appendChild(questionArea);
+
+      const answerBlock = document.createElement("div");
+      if (!row[column.key].expanded) {
+        answerBlock.classList.add("is-hidden");
+      }
+
+      const answerLabel = document.createElement("div");
+      answerLabel.className = "cell-label";
+      answerLabel.textContent = "ES内容";
+      answerBlock.appendChild(answerLabel);
+
+      const countWrap = document.createElement("div");
+      countWrap.className = "count-wrap";
+
+      const answerArea = document.createElement("textarea");
+      answerArea.className = "es-answer";
+      answerArea.value = row[column.key].answer || "";
+      answerArea.setAttribute("aria-label", column.label + " のES内容 " + (rowIndex + 1) + "行目");
+      fit(answerArea);
+
+      const charCount = document.createElement("div");
+      charCount.className = "char-count";
+      charCount.textContent = countChars(answerArea.value) + "文字";
+
+      answerArea.addEventListener("input", (event) => {
+        ensureEsShape(row, column.key);
+        row[column.key].answer = event.target.value;
+        fit(event.target);
+        charCount.textContent = countChars(event.target.value) + "文字";
+        saveRows();
+      });
+
+      toggleButton.addEventListener("click", () => {
+        ensureEsShape(row, column.key);
+        row[column.key].expanded = !row[column.key].expanded;
+        answerBlock.classList.toggle("is-hidden", !row[column.key].expanded);
+        toggleButton.textContent = row[column.key].expanded ? "▲" : "▼";
+        if (row[column.key].expanded) {
+          fit(answerArea);
+        }
+        saveRows();
+      });
+
+      countWrap.appendChild(answerArea);
+      countWrap.appendChild(charCount);
+      answerBlock.appendChild(countWrap);
+      cell.appendChild(answerBlock);
+      return cell;
+    }
+
+    function renderHead() {
+      headRow.innerHTML = "";
+      columns.forEach((column) => {
+        const th = document.createElement("th");
+        th.className = column.size + (column.sticky ? " sticky-company" : "");
+        th.textContent = column.label;
+        headRow.appendChild(th);
+      });
+      const actionTh = document.createElement("th");
+      actionTh.className = "action";
+      actionTh.textContent = "操作";
+      headRow.appendChild(actionTh);
+    }
+
+    function updateCellExtras(cell, row, column, rawValue) {
+      cell.querySelectorAll(".cell-link, .copy-button, .check-status").forEach((node) => node.remove());
+
+      if (column.key === "userName") {
+        const trimmed = String(rawValue || "").trim();
+        if (!trimmed) {
+          return;
+        }
+        const copyButton = document.createElement("button");
+        copyButton.type = "button";
+        copyButton.className = "copy-button";
+        copyButton.textContent = "コピー";
+        copyButton.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(trimmed);
+            copyButton.textContent = "コピー済み";
+          } catch (error) {
+            copyButton.textContent = "コピー失敗";
+          }
+          setTimeout(() => {
+            copyButton.textContent = "コピー";
+          }, 1200);
+        });
+        cell.appendChild(copyButton);
+        return;
+      }
+
+      if (!column.url) {
+        return;
+      }
+      const href = normalizeUrl(rawValue);
+      if (!href) {
+        return;
+      }
+
+      const link = document.createElement("a");
+      link.className = "cell-link";
+      link.href = href;
+      link.target = "_blank";
+      link.rel = "noreferrer noopener";
+      link.textContent = "リンクを開く";
+
+      if (column.key === "recruitPage") {
+        link.addEventListener("click", () => {
+          row.recruitPageLastOpened = new Date().toLocaleString("ja-JP");
+          saveRows();
+          render();
+        });
+      }
+
+      cell.appendChild(link);
+
+      if (column.key === "recruitPage" && row.recruitPageLastOpened) {
+        const status = document.createElement("div");
+        status.className = "check-status";
+        status.textContent = "最終確認日時: " + row.recruitPageLastOpened;
+        cell.appendChild(status);
+      }
+    }
+
+    function isRecruitPageStale(value) {
+      if (!value) {
+        return false;
+      }
+      const checkedAt = new Date(value);
+      if (Number.isNaN(checkedAt.getTime())) {
+        return false;
+      }
+      const now = new Date();
+      const diffMs = now.getTime() - checkedAt.getTime();
+      return diffMs >= 7 * 24 * 60 * 60 * 1000;
+    }
+
+    function normalizeUrl(value) {
+      const trimmed = (value || "").trim();
+      if (!trimmed) {
+        return "";
+      }
+      try {
+        const full = /^https?:\/\//i.test(trimmed) ? trimmed : "https://" + trimmed;
+        return new URL(full).href;
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function fit(textarea) {
+      textarea.style.height = "0px";
+      textarea.style.height = Math.max(textarea.scrollHeight, textarea.classList.contains("es-answer") ? 160 : textarea.classList.contains("es-question") ? 72 : textarea.classList.contains("site-textarea") ? 58 : 126) + "px";
+    }
+
+    function countChars(value) {
+      return (value || "").replace(/\r\n/g, "\n").length;
+    }
+
+    function ensureEsShape(row, key) {
+      if (!row[key] || typeof row[key] !== "object") {
+        row[key] = { question: "", answer: "", expanded: false };
+      }
+    }
+
+    function emptySiteRow() {
+      const row = {};
+      siteColumns.forEach((column) => {
+        row[column.key] = "";
+      });
+      return row;
+    }
+
+    function saveSiteRows() {
+      localStorage.setItem(SITE_STORAGE_KEY, JSON.stringify(siteRows));
+      updateStatus();
+    }
+    function emptyRow() {
+      const row = {};
+      columns.forEach((column) => {
+        row[column.key] = column.es ? { question: "", answer: "", expanded: false } : "";
+      });
+      return row;
+    }
+
+    function saveRows() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+      updateStatus();
+    }
+
+    function saveSchedules() {
+      localStorage.setItem(SCHEDULE_STORAGE_KEY, JSON.stringify(schedules));
+      updateStatus();
+    }
+
+    function updateStatus() {
+      statusNode.textContent = "最終保存 " + new Date().toLocaleTimeString("ja-JP", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function loadSiteRows() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(SITE_STORAGE_KEY) || "null");
+        if (Array.isArray(saved) && saved.length > 0) {
+          return saved.map((item) => {
+            const row = emptySiteRow();
+            siteColumns.forEach((column) => {
+              row[column.key] = item[column.key] || "";
+            });
+            return row;
+          });
+        }
+      } catch (error) {
+      }
+      return [emptySiteRow()];
+    }
+
+    function loadRows() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        if (Array.isArray(saved) && saved.length > 0) {
+          return saved.map((item) => {
+            const row = emptyRow();
+            columns.forEach((column) => {
+              if (column.es) {
+                const value = item[column.key];
+                row[column.key] = {
+                  question: value && typeof value === "object" ? value.question || "" : "",
+                  answer: value && typeof value === "object" ? value.answer || "" : "",
+                  expanded: value && typeof value === "object" ? !!value.expanded : false
+                };
+              } else {
+                row[column.key] = item[column.key] || "";
+              }
+            });
+            row.recruitPageLastOpened = item.recruitPageLastOpened || "";
+            return row;
+          });
+        }
+      } catch (error) {
+      }
+      return [emptyRow()];
+    }
+
+    function loadSchedules() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(SCHEDULE_STORAGE_KEY) || "[]");
+        if (Array.isArray(saved)) {
+          return saved.filter((item) => item && item.id && item.date && item.category && item.title).map((item) => ({
+            id: String(item.id),
+            date: String(item.date),
+            category: String(item.category),
+            title: String(item.title),
+            note: item.note ? String(item.note) : ""
+          }));
+        }
+      } catch (error) {
+      }
+      return [];
+    }
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

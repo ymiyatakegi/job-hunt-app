@@ -1,0 +1,491 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>基本情報 テストと記録</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero-card">
+      <div class="page-head">
+        <div>
+          <p class="eyebrow">TEST AND RECORD</p>
+          <h1>基本情報技術者試験 テスト / 記録</h1>
+          <p class="hero-text">単語帳と同期して、ランダム出題、正解率管理、進捗の可視化を行います。</p>
+        </div>
+        <div class="top-actions">
+          <a class="button secondary" href="./index.html">トップへ</a>
+          <a class="button secondary" href="./words.html">単語帳へ</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel-card">
+      <div class="section-tabs">
+        <button id="showTest" class="primary" type="button">テスト開始</button>
+        <button id="showRecord" class="secondary" type="button">記録</button>
+      </div>
+    </section>
+
+    <section id="testSection" class="quiz-card">
+      <div class="panel-head">
+        <div>
+          <h2>テスト開始</h2>
+          <p class="lead">問題はワードだけを表示します。解答欄で解説、出題範囲、添付画像を確認できます。</p>
+        </div>
+      </div>
+
+      <div class="meta-grid">
+        <article class="mini-card">
+          <p class="small-note">現在存在する問題数</p>
+          <strong id="availableCount">0</strong>
+        </article>
+        <article class="mini-card">
+          <p class="small-note">50%以下の問題</p>
+          <strong id="lowAccuracyCount">0</strong>
+        </article>
+      </div>
+
+      <div class="panel-card">
+        <div class="setup-grid">
+          <label class="field">
+            <span>出題する系</span>
+            <select id="categoryGroupFilter"></select>
+          </label>
+          <label class="field">
+            <span>出題する分野</span>
+            <select id="categoryFieldFilter"></select>
+          </label>
+          <label class="field">
+            <span>50%以下の問題のみ出題</span>
+            <select id="lowAccuracyOnly">
+              <option value="off">しない</option>
+              <option value="on">する</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>出題問題数</span>
+            <input id="questionCount" type="number" min="1" step="1" value="10">
+          </label>
+        </div>
+        <div class="setup-actions">
+          <button id="startQuiz" class="primary" type="button">この条件で開始</button>
+        </div>
+      </div>
+
+      <div id="quizArea" class="quiz-body"></div>
+    </section>
+
+    <section id="recordSection" class="record-card" style="display:none;">
+      <div class="panel-head">
+        <div>
+          <h2>記録</h2>
+          <p class="lead">2026年4月15日から2026年4月23日までの進捗と、分野別の達成数を見ます。</p>
+        </div>
+      </div>
+
+      <div class="record-grid" id="recordSummary"></div>
+
+      <div class="chart-card">
+        <h3>日別の達成ワード数</h3>
+        <p class="small-note">条件: 3回以上解いていて、正解率80%以上。目標は500ワードです。</p>
+        <div id="dailyChart" class="chart"></div>
+      </div>
+
+      <div class="chart-card">
+        <h3>分野ごとの達成ワード数</h3>
+        <p class="small-note">各分野30ワードを目標にしています。</p>
+        <div id="fieldChart" class="horizontal-chart"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./data.js"></script>
+  <script>
+    const showTestButton = document.getElementById("showTest");
+    const showRecordButton = document.getElementById("showRecord");
+    const testSection = document.getElementById("testSection");
+    const recordSection = document.getElementById("recordSection");
+    const availableCount = document.getElementById("availableCount");
+    const lowAccuracyCount = document.getElementById("lowAccuracyCount");
+    const categoryGroupFilter = document.getElementById("categoryGroupFilter");
+    const categoryFieldFilter = document.getElementById("categoryFieldFilter");
+    const lowAccuracyOnly = document.getElementById("lowAccuracyOnly");
+    const questionCountInput = document.getElementById("questionCount");
+    const startQuizButton = document.getElementById("startQuiz");
+    const quizArea = document.getElementById("quizArea");
+    const recordSummary = document.getElementById("recordSummary");
+    const dailyChart = document.getElementById("dailyChart");
+    const fieldChart = document.getElementById("fieldChart");
+
+    let words = loadWords().filter((item) => item.word.trim() && (item.note.trim() || item.noteImageData));
+    let stats = loadStats();
+    let session = null;
+
+    initializeFilters();
+    refreshCounts();
+    renderQuizHome();
+    renderRecords();
+
+    showTestButton.addEventListener("click", () => setSection("test"));
+    showRecordButton.addEventListener("click", () => setSection("record"));
+    categoryGroupFilter.addEventListener("change", () => {
+      fillFieldFilterOptions(categoryGroupFilter.value);
+    });
+    startQuizButton.addEventListener("click", startQuiz);
+
+    function setSection(section) {
+      const showTest = section === "test";
+      testSection.style.display = showTest ? "block" : "none";
+      recordSection.style.display = showTest ? "none" : "block";
+      showTestButton.className = showTest ? "primary" : "secondary";
+      showRecordButton.className = showTest ? "secondary" : "primary";
+      if (!showTest) {
+        words = loadWords().filter((item) => item.word.trim() && (item.note.trim() || item.noteImageData));
+        stats = loadStats();
+        refreshCounts();
+        renderRecords();
+      }
+    }
+
+    function initializeFilters() {
+      categoryGroupFilter.innerHTML = '<option value="all">すべて</option>';
+      Object.keys(FIELD_TREE).forEach((group) => {
+        const option = document.createElement("option");
+        option.value = group;
+        option.textContent = group;
+        categoryGroupFilter.appendChild(option);
+      });
+      fillFieldFilterOptions("all");
+    }
+
+    function fillFieldFilterOptions(group) {
+      categoryFieldFilter.innerHTML = '<option value="all">すべて</option>';
+      const fields = group === "all"
+        ? FIELD_OPTIONS.map((item) => item.label)
+        : FIELD_TREE[group];
+      fields.forEach((field) => {
+        const option = document.createElement("option");
+        option.value = field;
+        option.textContent = field;
+        categoryFieldFilter.appendChild(option);
+      });
+    }
+
+    function refreshCounts() {
+      words = loadWords().filter((item) => item.word.trim() && (item.note.trim() || item.noteImageData));
+      stats = loadStats();
+      availableCount.textContent = String(words.length);
+      lowAccuracyCount.textContent = String(words.filter((word) => {
+        const stat = stats[word.id];
+        return stat && stat.attempts > 0 && calcAccuracy(stat) <= 0.5;
+      }).length);
+      questionCountInput.max = String(Math.max(words.length, 1));
+    }
+
+    function renderQuizHome() {
+      quizArea.innerHTML = '<div class="empty-state">出題条件を決めて「この条件で開始」を押してください。</div>';
+    }
+
+    function startQuiz() {
+      refreshCounts();
+      if (!words.length) {
+        quizArea.innerHTML = '<div class="empty-state">先に単語帳でワードと解説を登録してください。</div>';
+        return;
+      }
+
+      const lowOnly = lowAccuracyOnly.value === "on";
+      const selectedGroup = categoryGroupFilter.value;
+      const selectedField = categoryFieldFilter.value;
+      const candidates = words.filter((word) => {
+        if (selectedGroup !== "all" && word.categoryGroup !== selectedGroup) {
+          return false;
+        }
+        if (selectedField !== "all") {
+          if (selectedGroup === "all") {
+            if (getFieldLabel(word) !== selectedField) {
+              return false;
+            }
+          } else if (word.categoryField !== selectedField) {
+            return false;
+          }
+        }
+        return !lowOnly || isLowAccuracyWord(word);
+      });
+      if (!candidates.length) {
+        quizArea.innerHTML = '<div class="empty-state">条件に合う問題がありません。出題範囲か50%以下のみ出題の条件を見直してください。</div>';
+        return;
+      }
+
+      const requestedCount = Math.max(1, Number(questionCountInput.value) || 1);
+      const queue = buildPriorityQueue(candidates).slice(0, Math.min(requestedCount, candidates.length));
+      session = {
+        queue,
+        index: 0,
+        answered: 0,
+        correct: 0
+      };
+      renderCurrentQuestion();
+    }
+
+    function buildPriorityQueue(sourceWords) {
+      const now = Date.now();
+      const buckets = {
+        veryLow: [],
+        recentWrong: [],
+        stale: [],
+        low: [],
+        random: []
+      };
+
+      sourceWords.forEach((word) => {
+        const stat = stats[word.id] || emptyStats();
+        const accuracy = calcAccuracy(stat);
+        const lastAnswered = stat.lastAnsweredAt ? new Date(stat.lastAnsweredAt).getTime() : 0;
+        const oneHour = 60 * 60 * 1000;
+        const oneDay = 24 * 60 * 60 * 1000;
+
+        if (stat.attempts > 0 && accuracy <= 0.25) {
+          buckets.veryLow.push(word);
+          return;
+        }
+        if (stat.lastResult === "wrong" && lastAnswered && now - lastAnswered <= oneHour) {
+          buckets.recentWrong.push(word);
+          return;
+        }
+        if (!lastAnswered || now - lastAnswered >= oneDay) {
+          buckets.stale.push(word);
+          return;
+        }
+        if (stat.attempts > 0 && accuracy <= 0.5) {
+          buckets.low.push(word);
+          return;
+        }
+        buckets.random.push(word);
+      });
+
+      buckets.veryLow.sort((a, b) => calcAccuracy(stats[a.id] || emptyStats()) - calcAccuracy(stats[b.id] || emptyStats()));
+      buckets.recentWrong.sort((a, b) => new Date(stats[b.id].lastAnsweredAt).getTime() - new Date(stats[a.id].lastAnsweredAt).getTime());
+      buckets.stale.sort((a, b) => {
+        const left = stats[a.id] && stats[a.id].lastAnsweredAt ? new Date(stats[a.id].lastAnsweredAt).getTime() : 0;
+        const right = stats[b.id] && stats[b.id].lastAnsweredAt ? new Date(stats[b.id].lastAnsweredAt).getTime() : 0;
+        return left - right;
+      });
+      buckets.low.sort((a, b) => calcAccuracy(stats[a.id] || emptyStats()) - calcAccuracy(stats[b.id] || emptyStats()));
+
+      return [
+        ...buckets.veryLow,
+        ...buckets.recentWrong,
+        ...buckets.stale,
+        ...buckets.low,
+        ...shuffle(buckets.random)
+      ];
+    }
+
+    function isLowAccuracyWord(word) {
+      const stat = stats[word.id];
+      return !!stat && stat.attempts > 0 && calcAccuracy(stat) <= 0.5;
+    }
+
+    function renderCurrentQuestion() {
+      if (!session || session.index >= session.queue.length) {
+        renderSessionDone();
+        return;
+      }
+
+      const current = session.queue[session.index];
+      const stat = stats[current.id] || emptyStats();
+      const rate = stat.attempts ? `${Math.round(calcAccuracy(stat) * 100)}%` : "未回答";
+
+      quizArea.innerHTML = "";
+
+      const summary = document.createElement("div");
+      summary.className = "summary-line";
+      summary.innerHTML = `
+        <span>問題数: ${session.queue.length}</span>
+        <span>回答数: ${session.answered}</span>
+        <span>○の数: ${session.correct}</span>
+        <span>○の割合: ${session.answered ? Math.round((session.correct / session.answered) * 100) : 0}%</span>
+      `;
+      quizArea.appendChild(summary);
+
+      const questionCard = document.createElement("div");
+      questionCard.className = "question-card";
+      questionCard.innerHTML = `
+        <div class="question-label">問題 ${session.index + 1}</div>
+        <div class="question-word">${escapeHtml(current.word)}</div>
+      `;
+
+      const answerPanel = document.createElement("div");
+      answerPanel.className = "answer-panel";
+
+      const rangeBlock = document.createElement("div");
+      rangeBlock.innerHTML = `<strong>出題範囲</strong><div>${escapeHtml(getFieldLabel(current))}</div>`;
+      answerPanel.appendChild(rangeBlock);
+
+      const noteBlock = document.createElement("div");
+      noteBlock.innerHTML = `<strong>解説</strong><div class="answer-note">${escapeHtml(current.note || "画像のみ登録")}</div>`;
+      answerPanel.appendChild(noteBlock);
+
+      if (current.noteImageData) {
+        const imageWrap = document.createElement("div");
+        imageWrap.className = "image-preview-wrap";
+        const imageCaption = document.createElement("div");
+        imageCaption.className = "image-caption";
+        imageCaption.textContent = current.noteImageName || "添付画像";
+        const image = document.createElement("img");
+        image.className = "answer-image";
+        image.src = current.noteImageData;
+        image.alt = current.noteImageName || "解説画像";
+        imageWrap.appendChild(imageCaption);
+        imageWrap.appendChild(image);
+        answerPanel.appendChild(imageWrap);
+      }
+
+      const statsBlock = document.createElement("div");
+      statsBlock.className = "summary-line";
+      statsBlock.innerHTML = `
+        <span>試行回数: ${stat.attempts}</span>
+        <span>正解数: ${stat.correct}</span>
+        <span>正解率: ${rate}</span>
+        <span>最終回答日: ${formatDateTime(stat.lastAnsweredAt)}</span>
+      `;
+      answerPanel.appendChild(statsBlock);
+
+      questionCard.appendChild(answerPanel);
+
+      const actions = document.createElement("div");
+      actions.className = "quiz-actions";
+
+      const showAnswer = document.createElement("button");
+      showAnswer.type = "button";
+      showAnswer.className = "secondary";
+      showAnswer.textContent = "解答を見る";
+      showAnswer.addEventListener("click", () => {
+        answerPanel.classList.add("is-visible");
+      });
+
+      const okButton = document.createElement("button");
+      okButton.type = "button";
+      okButton.className = "true-button button";
+      okButton.textContent = "○";
+      okButton.addEventListener("click", () => submitAnswer(current, true));
+
+      const ngButton = document.createElement("button");
+      ngButton.type = "button";
+      ngButton.className = "false-button button";
+      ngButton.textContent = "✕";
+      ngButton.addEventListener("click", () => submitAnswer(current, false));
+
+      actions.appendChild(showAnswer);
+      actions.appendChild(okButton);
+      actions.appendChild(ngButton);
+      questionCard.appendChild(actions);
+      quizArea.appendChild(questionCard);
+    }
+
+    function submitAnswer(word, isCorrect) {
+      answerWord(stats, word.id, isCorrect, new Date());
+      saveStats(stats);
+      session.answered += 1;
+      if (isCorrect) {
+        session.correct += 1;
+      }
+      session.index += 1;
+      renderCurrentQuestion();
+    }
+
+    function renderSessionDone() {
+      const rate = session && session.answered ? Math.round((session.correct / session.answered) * 100) : 0;
+      quizArea.innerHTML = `
+        <div class="empty-state">
+          <p>今回のテストが終了しました。</p>
+          <p>回答数: ${session ? session.answered : 0} / ○の数: ${session ? session.correct : 0} / ○の割合: ${rate}%</p>
+        </div>
+      `;
+      renderRecords();
+    }
+
+    function renderRecords() {
+      const latestWords = loadWords().filter((item) => item.word.trim() && (item.note.trim() || item.noteImageData));
+      const latestStats = loadStats();
+      const masteredNow = latestWords.filter((word) => isMastered(latestStats[word.id])).length;
+      const totalAttempts = latestWords.reduce((sum, word) => sum + (latestStats[word.id] ? latestStats[word.id].attempts : 0), 0);
+      const totalCorrect = latestWords.reduce((sum, word) => sum + (latestStats[word.id] ? latestStats[word.id].correct : 0), 0);
+      const overallRate = totalAttempts ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
+
+      recordSummary.innerHTML = `
+        <article class="metric-card"><span class="small-note">達成ワード数</span><strong>${masteredNow}</strong><span class="muted">目標500</span></article>
+        <article class="metric-card"><span class="small-note">全回答数</span><strong>${totalAttempts}</strong><span class="muted">全ワード合計</span></article>
+        <article class="metric-card"><span class="small-note">全体正解率</span><strong>${overallRate}%</strong><span class="muted">正解 ${totalCorrect} 回</span></article>
+      `;
+
+      renderDailyChart(latestWords, latestStats);
+      renderFieldChart(latestWords, latestStats);
+    }
+
+    function renderDailyChart(latestWords, latestStats) {
+      const start = new Date("2026-04-15T00:00:00");
+      const end = new Date("2026-04-23T00:00:00");
+      const rows = [];
+      for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+        const day = new Date(date);
+        const count = latestWords.filter((word) => {
+          const statAtDay = buildMasteredStatsAt(latestStats[word.id], endOfDay(day));
+          return isMastered(statAtDay);
+        }).length;
+        rows.push({
+          label: `${day.getMonth() + 1}/${day.getDate()}`,
+          value: count
+        });
+      }
+
+      const max = Math.max(10, ...rows.map((item) => item.value), 500);
+      dailyChart.innerHTML = "";
+      rows.forEach((item) => {
+        const wrap = document.createElement("div");
+        wrap.className = "bar-wrap";
+        const value = document.createElement("div");
+        value.className = "bar-value";
+        value.textContent = String(item.value);
+        const bar = document.createElement("div");
+        bar.className = "bar";
+        bar.style.height = `${Math.max(10, (item.value / max) * 220)}px`;
+        const label = document.createElement("div");
+        label.className = "bar-label";
+        label.textContent = item.label;
+        wrap.appendChild(value);
+        wrap.appendChild(bar);
+        wrap.appendChild(label);
+        dailyChart.appendChild(wrap);
+      });
+    }
+
+    function renderFieldChart(latestWords, latestStats) {
+      fieldChart.innerHTML = "";
+      FIELD_OPTIONS.forEach((option) => {
+        const count = latestWords.filter((word) => word.categoryGroup === option.group && word.categoryField === option.field && isMastered(latestStats[word.id])).length;
+        const row = document.createElement("div");
+        row.className = "horizontal-row";
+        row.innerHTML = `
+          <div>${escapeHtml(option.label)}</div>
+          <div class="track"><div class="fill" style="width:${Math.min(100, (count / 30) * 100)}%"></div></div>
+          <div>${count}/30</div>
+        `;
+        fieldChart.appendChild(row);
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+  </script>
+</body>
+</html>

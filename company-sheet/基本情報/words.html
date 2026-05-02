@@ -1,0 +1,346 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>基本情報 単語帳</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero-card">
+      <div class="page-head">
+        <div>
+          <p class="eyebrow">WORD BOOK</p>
+          <h1>基本情報技術者試験 単語帳</h1>
+          <p class="hero-text">覚えていないワード、意味や特性、出題箇所を下に追加していくページです。画像を付けたい時だけクリップボタンから添付できます。</p>
+        </div>
+        <div class="top-actions">
+          <a class="button secondary" href="./index.html">トップへ</a>
+          <a class="button primary" href="./review.html">テスト / 記録へ</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="table-card">
+      <div class="panel-head">
+        <div>
+          <h2>単語一覧</h2>
+          <p class="lead">出題範囲は「何系」→「分野」の2段階で選択します。</p>
+        </div>
+        <div class="inline-actions">
+          <button id="addWord" class="primary" type="button">ワードを追加</button>
+          <button id="resetWords" class="secondary" type="button">単語帳を全消去</button>
+        </div>
+      </div>
+
+      <div class="search-row">
+        <label class="search-box" for="searchWord">
+          <span>検索</span>
+          <input id="searchWord" type="text" placeholder="ワードで絞り込み">
+        </label>
+        <p id="wordStatus">保存済み</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="small-col">出題範囲</th>
+              <th class="large-col">ワード</th>
+              <th class="large-col">解説</th>
+              <th class="action-col">操作</th>
+            </tr>
+          </thead>
+          <tbody id="wordRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="./data.js"></script>
+  <script>
+    const wordRowsNode = document.getElementById("wordRows");
+    const addWordButton = document.getElementById("addWord");
+    const resetWordsButton = document.getElementById("resetWords");
+    const searchWordInput = document.getElementById("searchWord");
+    const wordStatus = document.getElementById("wordStatus");
+
+    let words = loadWords();
+    let query = "";
+
+    render();
+    updateStatus();
+
+    addWordButton.addEventListener("click", () => {
+      words.push(createWord());
+      saveWords(words);
+      render();
+      updateStatus();
+    });
+
+    resetWordsButton.addEventListener("click", () => {
+      if (!window.confirm("単語帳をすべて削除します。よろしいですか？")) {
+        return;
+      }
+      words = [createWord()];
+      saveWords(words);
+      render();
+      updateStatus();
+    });
+
+    searchWordInput.addEventListener("input", (event) => {
+      query = event.target.value.trim().toLowerCase();
+      render();
+    });
+
+    function render() {
+      wordRowsNode.innerHTML = "";
+      const filtered = words.filter((item) => {
+        const textHit = item.word.toLowerCase().includes(query) || item.note.toLowerCase().includes(query);
+        const imageHit = item.noteImageName.toLowerCase().includes(query);
+        return !query || textHit || imageHit;
+      });
+
+      filtered.forEach((item) => {
+        wordRowsNode.appendChild(createRow(item));
+      });
+
+      if (!filtered.length) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 4;
+        td.innerHTML = '<div class="empty-state">該当するワードがありません。</div>';
+        tr.appendChild(td);
+        wordRowsNode.appendChild(tr);
+      }
+    }
+
+    function createRow(item) {
+      const tr = document.createElement("tr");
+      tr.appendChild(createRangeCell(item));
+      tr.appendChild(createWordCell(item));
+      tr.appendChild(createNoteCell(item));
+      tr.appendChild(createActionCell(item));
+      return tr;
+    }
+
+    function createRangeCell(item) {
+      const td = document.createElement("td");
+      td.className = "small-col";
+      const cell = document.createElement("div");
+      cell.className = "cell";
+
+      const groupSelect = document.createElement("select");
+      groupSelect.className = "table-select";
+      Object.keys(FIELD_TREE).forEach((group) => {
+        const option = document.createElement("option");
+        option.value = group;
+        option.textContent = group;
+        option.selected = item.categoryGroup === group;
+        groupSelect.appendChild(option);
+      });
+
+      const fieldSelect = document.createElement("select");
+      fieldSelect.className = "table-select";
+      fillFieldSelect(fieldSelect, item.categoryGroup, item.categoryField);
+
+      const label = document.createElement("div");
+      label.className = "table-hint";
+      label.textContent = getFieldLabel(item);
+
+      groupSelect.addEventListener("change", (event) => {
+        item.categoryGroup = event.target.value;
+        item.categoryField = FIELD_TREE[item.categoryGroup][0];
+        item.updatedAt = new Date().toISOString();
+        fillFieldSelect(fieldSelect, item.categoryGroup, item.categoryField);
+        label.textContent = getFieldLabel(item);
+        persist();
+      });
+
+      fieldSelect.addEventListener("change", (event) => {
+        item.categoryField = event.target.value;
+        item.updatedAt = new Date().toISOString();
+        label.textContent = getFieldLabel(item);
+        persist();
+      });
+
+      cell.appendChild(groupSelect);
+      cell.appendChild(fieldSelect);
+      cell.appendChild(label);
+      td.appendChild(cell);
+      return td;
+    }
+
+    function createWordCell(item) {
+      const td = document.createElement("td");
+      td.className = "large-col";
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      const textarea = document.createElement("textarea");
+      textarea.className = "word-input";
+      textarea.value = item.word;
+      textarea.placeholder = "覚えていないワードを入力";
+      textarea.addEventListener("input", (event) => {
+        item.word = event.target.value;
+        item.updatedAt = new Date().toISOString();
+        autoSize(event.target);
+        persist(false);
+      });
+      autoSize(textarea);
+      cell.appendChild(textarea);
+      td.appendChild(cell);
+      return td;
+    }
+
+    function createNoteCell(item) {
+      const td = document.createElement("td");
+      td.className = "large-col";
+      const cell = document.createElement("div");
+      cell.className = "cell";
+
+      const tools = document.createElement("div");
+      tools.className = "note-tools";
+
+      const toolGroup = document.createElement("div");
+      toolGroup.className = "inline-tool-group";
+
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = "image/*";
+      fileInput.hidden = true;
+
+      const attachButton = document.createElement("button");
+      attachButton.type = "button";
+      attachButton.className = "attach-button";
+      attachButton.textContent = "📎";
+      attachButton.addEventListener("click", () => fileInput.click());
+
+      const clearButton = document.createElement("button");
+      clearButton.type = "button";
+      clearButton.className = "text-button";
+      clearButton.textContent = "画像削除";
+      clearButton.style.display = item.noteImageData ? "inline-flex" : "none";
+      clearButton.addEventListener("click", () => {
+        item.noteImageData = "";
+        item.noteImageName = "";
+        item.updatedAt = new Date().toISOString();
+        persist();
+      });
+
+      fileInput.addEventListener("change", async (event) => {
+        const file = event.target.files && event.target.files[0];
+        if (!file) {
+          return;
+        }
+        const dataUrl = await readFileAsDataUrl(file);
+        item.noteImageData = dataUrl;
+        item.noteImageName = file.name;
+        item.updatedAt = new Date().toISOString();
+        persist();
+      });
+
+      toolGroup.appendChild(attachButton);
+      toolGroup.appendChild(clearButton);
+      toolGroup.appendChild(fileInput);
+      tools.appendChild(toolGroup);
+      cell.appendChild(tools);
+
+      const textarea = document.createElement("textarea");
+      textarea.className = "note-input";
+      textarea.value = item.note;
+      textarea.placeholder = "意味、特性、出題箇所のメモ";
+      textarea.addEventListener("input", (event) => {
+        item.note = event.target.value;
+        item.updatedAt = new Date().toISOString();
+        autoSize(event.target);
+        persist(false);
+      });
+      autoSize(textarea);
+      cell.appendChild(textarea);
+
+      if (item.noteImageData) {
+        const previewWrap = document.createElement("div");
+        previewWrap.className = "image-preview-wrap";
+
+        const caption = document.createElement("div");
+        caption.className = "image-caption";
+        caption.textContent = item.noteImageName || "添付画像";
+
+        const preview = document.createElement("img");
+        preview.className = "note-preview";
+        preview.src = item.noteImageData;
+        preview.alt = item.noteImageName || "解説画像";
+
+        previewWrap.appendChild(caption);
+        previewWrap.appendChild(preview);
+        cell.appendChild(previewWrap);
+      }
+
+      td.appendChild(cell);
+      return td;
+    }
+
+    function createActionCell(item) {
+      const td = document.createElement("td");
+      td.className = "action-col";
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "danger";
+      remove.textContent = "削除";
+      remove.addEventListener("click", () => {
+        words = words.filter((entry) => entry.id !== item.id);
+        if (!words.length) {
+          words = [createWord()];
+        }
+        saveWords(words);
+        render();
+        updateStatus();
+      });
+      cell.appendChild(remove);
+      td.appendChild(cell);
+      return td;
+    }
+
+    function fillFieldSelect(select, group, selectedField) {
+      select.innerHTML = "";
+      FIELD_TREE[group].forEach((field) => {
+        const option = document.createElement("option");
+        option.value = field;
+        option.textContent = field;
+        option.selected = field === selectedField;
+        select.appendChild(option);
+      });
+    }
+
+    function autoSize(textarea) {
+      textarea.style.height = "0px";
+      textarea.style.height = Math.max(textarea.scrollHeight, textarea.classList.contains("note-input") ? 124 : 84) + "px";
+    }
+
+    function persist(shouldRender = true) {
+      saveWords(words);
+      updateStatus();
+      if (shouldRender) {
+        render();
+      }
+    }
+
+    function updateStatus() {
+      wordStatus.textContent = `保存済み: ${new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })}`;
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+    }
+  </script>
+</body>
+</html>
+
