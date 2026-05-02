@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>貯金記録</title>
+  <style>
+    :root {
+      --bg: #f4f7f4;
+      --surface: #fffef9;
+      --surface-2: #edf4ec;
+      --line: #cbd8c7;
+      --text: #20271f;
+      --muted: #60705d;
+      --accent: #22715f;
+      --accent-2: #164e43;
+      --income: #1f8a5f;
+      --expense: #c2412d;
+      --hours: #4866b1;
+      --shadow: 0 12px 28px rgba(42, 56, 39, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      color: var(--text);
+      background: linear-gradient(180deg, #fbfcf8 0%, var(--bg) 100%);
+      font-family: "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
+      line-height: 1.5;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      min-height: 44px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      padding: 10px 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      padding: 14px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      margin: -14px -14px 12px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(244, 247, 244, 0.96);
+      backdrop-filter: blur(10px);
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 4px;
+      font-size: 1.38rem;
+      line-height: 1.25;
+    }
+
+    .status {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .tab {
+      color: var(--muted);
+      border-color: var(--line);
+      background: var(--surface);
+    }
+
+    .tab.is-active {
+      color: #fff;
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.is-active {
+      display: block;
+    }
+
+    .panel,
+    .day-card {
+      margin-bottom: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel {
+      padding: 12px;
+    }
+
+    .month-row,
+    .button-row,
+    .summary-grid,
+    .expense-line {
+      display: grid;
+      gap: 8px;
+    }
+
+    .month-row {
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+    }
+
+    .button-row {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .primary {
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .secondary {
+      color: var(--text);
+      border-color: var(--line);
+      background: var(--surface);
+    }
+
+    .danger {
+      color: var(--expense);
+      border-color: rgba(194, 65, 45, 0.28);
+      background: rgba(194, 65, 45, 0.08);
+    }
+
+    .month-label {
+      min-width: 7.5em;
+      text-align: center;
+      font-weight: 800;
+    }
+
+    .summary-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 10px;
+    }
+
+    .metric {
+      border: 1px solid rgba(203, 216, 199, 0.8);
+      border-radius: 12px;
+      padding: 10px;
+      background: var(--surface-2);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 1.05rem;
+      overflow-wrap: anywhere;
+    }
+
+    .day-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px;
+      background: var(--surface-2);
+    }
+
+    .day-title {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .net {
+      margin: 0;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .net.is-plus {
+      color: var(--income);
+    }
+
+    .net.is-minus {
+      color: var(--expense);
+    }
+
+    .fields {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 9px 10px;
+      color: var(--text);
+      background: #fffefb;
+    }
+
+    .readonly {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      border-top: 1px solid rgba(203, 216, 199, 0.75);
+      padding-top: 10px;
+    }
+
+    .readonly span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .readonly strong {
+      font-size: 1rem;
+      text-align: right;
+    }
+
+    details {
+      border-top: 1px solid rgba(203, 216, 199, 0.75);
+    }
+
+    summary {
+      min-height: 44px;
+      padding: 12px;
+      color: var(--accent-2);
+      font-weight: 800;
+      cursor: pointer;
+      list-style-position: inside;
+    }
+
+    .expense-list {
+      display: grid;
+      gap: 8px;
+      padding: 0 12px 12px;
+    }
+
+    .expense-line {
+      grid-template-columns: 1fr 1fr auto;
+      align-items: end;
+    }
+
+    .small-button {
+      min-width: 44px;
+      padding: 8px 10px;
+    }
+
+    .chart-wrap {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 320px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0 0;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .swatch.hours {
+      background: var(--hours);
+    }
+
+    .table-wrap {
+      margin-top: 12px;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+    }
+
+    table {
+      width: 100%;
+      min-width: 520px;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid rgba(203, 216, 199, 0.75);
+      padding: 9px;
+      text-align: right;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    th {
+      color: var(--muted);
+      background: var(--surface-2);
+      font-size: 0.78rem;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    @media (max-width: 430px) {
+      .app {
+        padding: 10px;
+      }
+
+      .topbar {
+        margin: -10px -10px 10px;
+        padding: 10px;
+      }
+
+      .field-grid,
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .expense-line {
+        grid-template-columns: 1fr;
+      }
+
+      .expense-line .small-button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <h1>貯金記録</h1>
+      <p id="status" class="status">保存済み</p>
+      <nav class="tabs" aria-label="ページ切り替え">
+        <button class="tab is-active" type="button" data-view="records">収入・支出</button>
+        <button class="tab" type="button" data-view="savings">貯金増減</button>
+      </nav>
+    </header>
+
+    <section id="records" class="view is-active">
+      <div class="panel">
+        <div class="month-row">
+          <button id="prevMonth" class="secondary" type="button">前の月</button>
+          <div id="monthLabel" class="month-label"></div>
+          <button id="nextMonth" class="secondary" type="button">次の月</button>
+        </div>
+        <div class="summary-grid">
+          <div class="metric">
+            <span>月の収入</span>
+            <strong id="monthIncome">0円</strong>
+          </div>
+          <div class="metric">
+            <span>月の支出</span>
+            <strong id="monthExpense">0円</strong>
+          </div>
+          <div class="metric">
+            <span>月の収入-支出</span>
+            <strong id="monthNet">0円</strong>
+          </div>
+          <div class="metric">
+            <span>作業+向上時間</span>
+            <strong id="monthHours">0時間</strong>
+          </div>
+        </div>
+      </div>
+      <div id="dayList"></div>
+    </section>
+
+    <section id="savings" class="view">
+      <div class="panel">
+        <div class="month-row">
+          <button id="prevYear" class="secondary" type="button">前年</button>
+          <div id="yearLabel" class="month-label"></div>
+          <button id="nextYear" class="secondary" type="button">翌年</button>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="savingsChart" width="720" height="360"></canvas>
+        <div class="legend">
+          <div class="legend-item"><span class="swatch"></span>貯金増減</div>
+          <div class="legend-item"><span class="swatch hours"></span>作業+向上時間</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>月</th>
+              <th>収入</th>
+              <th>支出</th>
+              <th>増減</th>
+              <th>作業+向上</th>
+            </tr>
+          </thead>
+          <tbody id="monthRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <template id="dayTemplate">
+    <article class="day-card">
+      <div class="day-head">
+        <h2 class="day-title"></h2>
+        <p class="net"></p>
+      </div>
+      <div class="fields">
+        <div class="field-grid">
+          <label>
+            作業時間
+            <input class="work-hours" type="number" min="0" step="0.25" inputmode="decimal">
+          </label>
+          <label>
+            向上時間
+            <input class="improve-hours" type="number" min="0" step="0.25" inputmode="decimal">
+          </label>
+          <label>
+            収入
+            <input class="income" type="number" min="0" step="1" inputmode="numeric">
+          </label>
+          <label>
+            支出合計
+            <input class="expense-total" type="number" readonly>
+          </label>
+        </div>
+        <div class="readonly">
+          <span>この日の収入-支出</span>
+          <strong class="daily-net">0円</strong>
+        </div>
+        <div class="readonly">
+          <span class="cumulative-label"></span>
+          <strong class="cumulative-net">0円</strong>
+        </div>
+      </div>
+      <details>
+        <summary>支出明細</summary>
+        <div class="expense-list"></div>
+      </details>
+    </article>
+  </template>
+
+  <script>
+    const STORAGE_KEY = "savings-tracker-v1";
+    const dayList = document.getElementById("dayList");
+    const dayTemplate = document.getElementById("dayTemplate");
+    const monthLabel = document.getElementById("monthLabel");
+    const yearLabel = document.getElementById("yearLabel");
+    const monthIncome = document.getElementById("monthIncome");
+    const monthExpense = document.getElementById("monthExpense");
+    const monthNet = document.getElementById("monthNet");
+    const monthHours = document.getElementById("monthHours");
+    const statusNode = document.getElementById("status");
+    const monthRows = document.getElementById("monthRows");
+    const chart = document.getElementById("savingsChart");
+    const ctx = chart.getContext("2d");
+
+    let data = loadData();
+    let currentMonth = new Date();
+    let currentYear = currentMonth.getFullYear();
+    currentMonth.setDate(1);
+
+    init();
+
+    function init() {
+      document.querySelectorAll(".tab").forEach((tab) => {
+        tab.addEventListener("click", () => switchView(tab.dataset.view));
+      });
+
+      document.getElementById("prevMonth").addEventListener("click", () => {
+        currentMonth.setMonth(currentMonth.getMonth() - 1);
+        currentYear = currentMonth.getFullYear();
+        renderAll();
+      });
+
+      document.getElementById("nextMonth").addEventListener("click", () => {
+        currentMonth.setMonth(currentMonth.getMonth() + 1);
+        currentYear = currentMonth.getFullYear();
+        renderAll();
+      });
+
+      document.getElementById("prevYear").addEventListener("click", () => {
+        currentYear -= 1;
+        renderSavings();
+      });
+
+      document.getElementById("nextYear").addEventListener("click", () => {
+        currentYear += 1;
+        renderSavings();
+      });
+
+      renderAll();
+    }
+
+    function switchView(id) {
+      document.querySelectorAll(".tab").forEach((tab) => {
+        tab.classList.toggle("is-active", tab.dataset.view === id);
+      });
+      document.querySelectorAll(".view").forEach((view) => {
+        view.classList.toggle("is-active", view.id === id);
+      });
+      if (id === "savings") {
+        renderSavings();
+      }
+    }
+
+    function renderAll() {
+      renderRecords();
+      renderSavings();
+    }
+
+    function renderRecords() {
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth() + 1;
+      const monthKey = getMonthKey(year, month);
+      ensureMonth(monthKey, year, month);
+      monthLabel.textContent = year + "年" + String(month).padStart(2, "0") + "月";
+      dayList.innerHTML = "";
+
+      const days = daysInMonth(year, month);
+      const monthData = data.months[monthKey];
+      let cumulative = 0;
+
+      for (let day = 1; day <= days; day += 1) {
+        const dayKey = String(day);
+        const record = ensureDay(monthData, dayKey);
+        const card = createDayCard(year, month, day, record, (dailyNet) => {
+          cumulative += dailyNet;
+          return cumulative;
+        });
+        dayList.appendChild(card);
+      }
+
+      updateMonthSummary(monthKey);
+    }
+
+    function createDayCard(year, month, day, record, cumulativeProvider) {
+      const node = dayTemplate.content.firstElementChild.cloneNode(true);
+      const dateText = month + "/" + day;
+      const expenseTotal = sumExpenses(record.expenses);
+      const dailyNet = Number(record.income || 0) - expenseTotal;
+      const cumulative = cumulativeProvider(dailyNet);
+
+      node.dataset.day = String(day);
+      node.querySelector(".day-title").textContent = dateText;
+      setNetNode(node.querySelector(".net"), dailyNet);
+      node.querySelector(".work-hours").value = valueOrBlank(record.workHours);
+      node.querySelector(".improve-hours").value = valueOrBlank(record.improveHours);
+      node.querySelector(".income").value = valueOrBlank(record.income);
+      node.querySelector(".expense-total").value = expenseTotal;
+      node.querySelector(".daily-net").textContent = yen(dailyNet);
+      node.querySelector(".cumulative-label").textContent = month + "/1〜" + dateText + "の収入-支出合計";
+      node.querySelector(".cumulative-net").textContent = yen(cumulative);
+
+      bindNumberInput(node.querySelector(".work-hours"), record, "workHours");
+      bindNumberInput(node.querySelector(".improve-hours"), record, "improveHours");
+      bindNumberInput(node.querySelector(".income"), record, "income");
+      renderExpenseLines(node.querySelector(".expense-list"), record);
+      return node;
+    }
+
+    function bindNumberInput(input, record, key) {
+      input.addEventListener("input", (event) => {
+        record[key] = toNumber(event.target.value);
+        saveData();
+        refreshCalculatedValues();
+      });
+    }
+
+    function renderExpenseLines(container, record) {
+      container.innerHTML = "";
+      if (!Array.isArray(record.expenses)) {
+        record.expenses = [];
+      }
+      if (record.expenses.length === 0) {
+        record.expenses.push({ name: "", amount: 0 });
+      }
+
+      record.expenses.forEach((expense, index) => {
+        const line = document.createElement("div");
+        line.className = "expense-line";
+        line.innerHTML =
+          '<label>内容<input class="expense-name" type="text" placeholder="例: 食費"></label>' +
+          '<label>金額<input class="expense-amount" type="number" min="0" step="1" inputmode="numeric"></label>' +
+          '<button class="danger small-button" type="button">削除</button>';
+
+        const nameInput = line.querySelector(".expense-name");
+        const amountInput = line.querySelector(".expense-amount");
+        nameInput.value = expense.name || "";
+        amountInput.value = valueOrBlank(expense.amount);
+
+        nameInput.addEventListener("input", (event) => {
+          expense.name = event.target.value;
+          saveData();
+        });
+
+        amountInput.addEventListener("input", (event) => {
+          expense.amount = toNumber(event.target.value);
+          saveData();
+          refreshCalculatedValues();
+        });
+
+        line.querySelector("button").addEventListener("click", () => {
+          record.expenses.splice(index, 1);
+          saveData();
+          renderRecords();
+        });
+
+        container.appendChild(line);
+      });
+
+      const addButton = document.createElement("button");
+      addButton.className = "secondary";
+      addButton.type = "button";
+      addButton.textContent = "支出を追加";
+      addButton.addEventListener("click", () => {
+        record.expenses.push({ name: "", amount: 0 });
+        saveData();
+        renderRecords();
+      });
+      container.appendChild(addButton);
+    }
+
+    function updateMonthSummary(monthKey) {
+      const summary = getMonthSummary(monthKey);
+      monthIncome.textContent = yen(summary.income);
+      monthExpense.textContent = yen(summary.expense);
+      monthNet.textContent = yen(summary.net);
+      monthHours.textContent = formatHours(summary.hours);
+    }
+
+    function refreshCalculatedValues() {
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth() + 1;
+      const monthKey = getMonthKey(year, month);
+      const monthData = data.months[monthKey];
+      if (!monthData) return;
+
+      let cumulative = 0;
+      dayList.querySelectorAll(".day-card").forEach((card) => {
+        const record = monthData.days[card.dataset.day];
+        if (!record) return;
+        const expenseTotal = sumExpenses(record.expenses);
+        const dailyNet = Number(record.income || 0) - expenseTotal;
+        cumulative += dailyNet;
+
+        const expenseInput = card.querySelector(".expense-total");
+        if (expenseInput) expenseInput.value = expenseTotal;
+        setNetNode(card.querySelector(".net"), dailyNet);
+        card.querySelector(".daily-net").textContent = yen(dailyNet);
+        card.querySelector(".cumulative-net").textContent = yen(cumulative);
+      });
+
+      updateMonthSummary(monthKey);
+    }
+
+    function renderSavings() {
+      yearLabel.textContent = currentYear + "年";
+      const rows = [];
+      for (let month = 1; month <= 12; month += 1) {
+        const key = getMonthKey(currentYear, month);
+        const summary = getMonthSummary(key);
+        rows.push({ month, ...summary });
+      }
+      drawChart(rows);
+      renderMonthRows(rows);
+    }
+
+    function drawChart(rows) {
+      const dpr = window.devicePixelRatio || 1;
+      const width = chart.clientWidth || 720;
+      const height = 320;
+      chart.width = width * dpr;
+      chart.height = height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+
+      const pad = { top: 24, right: 18, bottom: 38, left: 44 };
+      const plotW = width - pad.left - pad.right;
+      const plotH = height - pad.top - pad.bottom;
+      const netValues = rows.map((row) => row.net);
+      const hourValues = rows.map((row) => row.hours);
+      const netMin = Math.min(0, ...netValues);
+      const netMax = Math.max(1, ...netValues);
+      const hourMax = Math.max(1, ...hourValues);
+
+      drawGrid(width, height, pad, plotW, plotH);
+      drawAxisLabels(rows, pad, plotW, height);
+      drawLine(rows, (row) => row.net, netMin, netMax, pad, plotW, plotH, getCss("--accent"), "円");
+      drawLine(rows, (row) => row.hours, 0, hourMax, pad, plotW, plotH, getCss("--hours"), "時間");
+    }
+
+    function drawGrid(width, height, pad, plotW, plotH) {
+      ctx.strokeStyle = "#d7dfd3";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i <= 4; i += 1) {
+        const y = pad.top + (plotH / 4) * i;
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(width - pad.right, y);
+      }
+      ctx.stroke();
+
+      ctx.strokeStyle = "#9ba995";
+      ctx.beginPath();
+      ctx.moveTo(pad.left, pad.top);
+      ctx.lineTo(pad.left, height - pad.bottom);
+      ctx.lineTo(width - pad.right, height - pad.bottom);
+      ctx.stroke();
+    }
+
+    function drawAxisLabels(rows, pad, plotW, height) {
+      ctx.fillStyle = "#60705d";
+      ctx.font = "12px Yu Gothic UI, sans-serif";
+      ctx.textAlign = "center";
+      rows.forEach((row, index) => {
+        const x = pad.left + (plotW / 11) * index;
+        ctx.fillText(String(row.month), x, height - 14);
+      });
+    }
+
+    function drawLine(rows, getter, min, max, pad, plotW, plotH, color, unit) {
+      const range = max - min || 1;
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      rows.forEach((row, index) => {
+        const x = pad.left + (plotW / 11) * index;
+        const y = pad.top + plotH - ((getter(row) - min) / range) * plotH;
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+      ctx.stroke();
+
+      rows.forEach((row, index) => {
+        const x = pad.left + (plotW / 11) * index;
+        const y = pad.top + plotH - ((getter(row) - min) / range) * plotH;
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      const last = rows[rows.length - 1];
+      const lastValue = getter(last);
+      ctx.font = "12px Yu Gothic UI, sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText(formatGraphValue(lastValue, unit), pad.left + plotW, pad.top + 12);
+    }
+
+    function renderMonthRows(rows) {
+      monthRows.innerHTML = "";
+      rows.forEach((row) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML =
+          "<td>" + row.month + "月</td>" +
+          "<td>" + yen(row.income) + "</td>" +
+          "<td>" + yen(row.expense) + "</td>" +
+          "<td>" + yen(row.net) + "</td>" +
+          "<td>" + formatHours(row.hours) + "</td>";
+        monthRows.appendChild(tr);
+      });
+    }
+
+    function getMonthSummary(monthKey) {
+      const monthData = data.months[monthKey];
+      if (!monthData) {
+        return { income: 0, expense: 0, net: 0, hours: 0 };
+      }
+      return Object.values(monthData.days).reduce((sum, record) => {
+        const expense = sumExpenses(record.expenses);
+        const income = Number(record.income || 0);
+        sum.income += income;
+        sum.expense += expense;
+        sum.net += income - expense;
+        sum.hours += Number(record.workHours || 0) + Number(record.improveHours || 0);
+        return sum;
+      }, { income: 0, expense: 0, net: 0, hours: 0 });
+    }
+
+    function ensureMonth(monthKey, year, month) {
+      if (!data.months[monthKey]) {
+        data.months[monthKey] = { year, month, days: {} };
+      }
+      return data.months[monthKey];
+    }
+
+    function ensureDay(monthData, dayKey) {
+      if (!monthData.days[dayKey]) {
+        monthData.days[dayKey] = { workHours: 0, improveHours: 0, income: 0, expenses: [] };
+      }
+      if (!Array.isArray(monthData.days[dayKey].expenses)) {
+        monthData.days[dayKey].expenses = [];
+      }
+      return monthData.days[dayKey];
+    }
+
+    function loadData() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        if (saved && saved.months && typeof saved.months === "object") {
+          return saved;
+        }
+      } catch (error) {
+      }
+      return { months: {} };
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      statusNode.textContent = "最終保存 " + new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function daysInMonth(year, month) {
+      return new Date(year, month, 0).getDate();
+    }
+
+    function getMonthKey(year, month) {
+      return year + "-" + String(month).padStart(2, "0");
+    }
+
+    function sumExpenses(expenses) {
+      if (!Array.isArray(expenses)) return 0;
+      return expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    }
+
+    function toNumber(value) {
+      const number = Number(value);
+      return Number.isFinite(number) ? number : 0;
+    }
+
+    function valueOrBlank(value) {
+      return Number(value || 0) === 0 ? "" : String(value);
+    }
+
+    function yen(value) {
+      return Math.round(Number(value || 0)).toLocaleString("ja-JP") + "円";
+    }
+
+    function formatHours(value) {
+      const number = Number(value || 0);
+      return Number.isInteger(number) ? number + "時間" : number.toFixed(2).replace(/0+$/, "").replace(/\.$/, "") + "時間";
+    }
+
+    function formatGraphValue(value, unit) {
+      return unit === "円" ? yen(value) : formatHours(value);
+    }
+
+    function setNetNode(node, value) {
+      node.textContent = yen(value);
+      node.classList.toggle("is-plus", value >= 0);
+      node.classList.toggle("is-minus", value < 0);
+    }
+
+    function getCss(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+  </script>
+</body>
+</html>
