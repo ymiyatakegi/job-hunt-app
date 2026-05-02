@@ -9,12 +9,12 @@
       --bg: #f6f3ed;
       --surface: #fffdf8;
       --surface-2: #f1eadf;
-      --line: #d8c9b4;
+      --line: #d9b5f8;
       --text: #2c241b;
-      --muted: #706557;
-      --accent: #0f766e;
-      --accent-strong: #115e59;
-      --danger: #b42318;
+      --muted: #002877;
+      --accent: #0898ff;
+      --accent-strong: #0071a9;
+      --danger: #c567f7;
       --blue: #e8f2ff;
       --red: #fff0f0;
       --shadow: 0 10px 24px rgba(70, 51, 28, 0.12);
@@ -315,6 +315,88 @@
       gap: 8px;
     }
 
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+
+    .weekday {
+      padding: 6px 0;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .day {
+      min-height: 78px;
+      border: 1px solid rgba(216, 201, 180, 0.82);
+      border-radius: 10px;
+      padding: 5px;
+      background: var(--surface);
+      text-align: left;
+    }
+
+    .day.is-outside {
+      opacity: 0.45;
+      background: #eee8de;
+    }
+
+    .day.is-today {
+      border-color: var(--accent);
+      box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.24);
+    }
+
+    .day-number {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 3px;
+      margin-bottom: 4px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .day-add {
+      width: 22px;
+      min-height: 22px;
+      border-radius: 999px;
+      padding: 0;
+      color: var(--accent-strong);
+      border-color: rgba(15, 118, 110, 0.25);
+      background: rgba(15, 118, 110, 0.08);
+      line-height: 1;
+    }
+
+    .day-events {
+      display: grid;
+      gap: 3px;
+    }
+
+    .day-event {
+      width: 100%;
+      min-height: 22px;
+      border: 0;
+      border-radius: 6px;
+      padding: 2px 4px;
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .more-events {
+      margin: 1px 0 0;
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 700;
+    }
+
     .event {
       border-left: 6px solid var(--accent);
       border-radius: 12px;
@@ -412,6 +494,14 @@
       .event-actions {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
+
+      .calendar {
+        gap: 6px;
+      }
+
+      .day {
+        min-height: 96px;
+      }
     }
   </style>
 </head>
@@ -452,6 +542,7 @@
         </div>
         <button id="addEvent" class="primary" type="button">予定を追加</button>
       </div>
+      <div id="calendarGrid" class="calendar"></div>
       <div id="eventList" class="event-list"></div>
     </section>
 
@@ -543,6 +634,7 @@
 
     const companyList = document.getElementById("companyList");
     const siteList = document.getElementById("siteList");
+    const calendarGrid = document.getElementById("calendarGrid");
     const eventList = document.getElementById("eventList");
     const statusNode = document.getElementById("status");
     const companySearch = document.getElementById("companySearch");
@@ -833,6 +925,7 @@
     }
 
     function renderSchedule() {
+      calendarGrid.innerHTML = "";
       eventList.innerHTML = "";
       monthLabel.textContent = currentMonth.getFullYear() + "年" + String(currentMonth.getMonth() + 1).padStart(2, "0") + "月";
 
@@ -842,6 +935,8 @@
           return date.getFullYear() === currentMonth.getFullYear() && date.getMonth() === currentMonth.getMonth();
         })
         .sort((a, b) => a.date.localeCompare(b.date));
+
+      renderCalendarGrid();
 
       if (monthEvents.length === 0) {
         eventList.appendChild(emptyMessage("この月の予定はありません。"));
@@ -879,6 +974,88 @@
         node.appendChild(actions);
         eventList.appendChild(node);
       });
+    }
+
+    function renderCalendarGrid() {
+      ["日", "月", "火", "水", "木", "金", "土"].forEach((weekday) => {
+        const node = document.createElement("div");
+        node.className = "weekday";
+        node.textContent = weekday;
+        calendarGrid.appendChild(node);
+      });
+
+      const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      const startDate = new Date(firstDay);
+      startDate.setDate(firstDay.getDate() - firstDay.getDay());
+      const totalCells = needsSixRows(startDate) ? 42 : 35;
+
+      for (let index = 0; index < totalCells; index += 1) {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + index);
+        calendarGrid.appendChild(createDayCell(date));
+      }
+    }
+
+    function createDayCell(date) {
+      const dateValue = formatDate(date);
+      const dayEvents = schedules
+        .filter((item) => item.date === dateValue)
+        .sort((a, b) => a.title.localeCompare(b.title, "ja"));
+
+      const cell = document.createElement("div");
+      cell.className = "day";
+      if (date.getMonth() !== currentMonth.getMonth()) cell.classList.add("is-outside");
+      if (isSameDate(date, new Date())) cell.classList.add("is-today");
+
+      const top = document.createElement("div");
+      top.className = "day-number";
+      const number = document.createElement("span");
+      number.textContent = String(date.getDate());
+      const add = document.createElement("button");
+      add.className = "day-add";
+      add.type = "button";
+      add.textContent = "+";
+      add.setAttribute("aria-label", formatDateLabel(dateValue) + "に予定を追加");
+      add.addEventListener("click", () => openEventModal(dateValue));
+      top.appendChild(number);
+      top.appendChild(add);
+      cell.appendChild(top);
+
+      const events = document.createElement("div");
+      events.className = "day-events";
+      dayEvents.slice(0, 2).forEach((item) => {
+        const meta = categoryMeta(item.category);
+        const chip = document.createElement("button");
+        chip.className = "day-event";
+        chip.type = "button";
+        chip.style.background = meta.color;
+        chip.textContent = item.title;
+        chip.title = meta.label + " / " + item.title;
+        chip.addEventListener("click", () => openEventModal(item.date, item));
+        events.appendChild(chip);
+      });
+
+      if (dayEvents.length > 2) {
+        const more = document.createElement("p");
+        more.className = "more-events";
+        more.textContent = "ほか" + (dayEvents.length - 2) + "件";
+        events.appendChild(more);
+      }
+
+      cell.appendChild(events);
+      return cell;
+    }
+
+    function needsSixRows(startDate) {
+      const currentMonthIndex = currentMonth.getMonth();
+      const rowStart = new Date(startDate);
+      rowStart.setDate(startDate.getDate() + 35);
+      for (let offset = 0; offset < 7; offset += 1) {
+        const checkDate = new Date(rowStart);
+        checkDate.setDate(rowStart.getDate() + offset);
+        if (checkDate.getMonth() === currentMonthIndex) return true;
+      }
+      return false;
     }
 
     function renderSites() {
@@ -1095,6 +1272,12 @@
     function formatDateLabel(value) {
       const parts = value.split("-");
       return parts[0] + "年" + parts[1] + "月" + parts[2] + "日";
+    }
+
+    function isSameDate(left, right) {
+      return left.getFullYear() === right.getFullYear() &&
+        left.getMonth() === right.getMonth() &&
+        left.getDate() === right.getDate();
     }
 
     function emptyMessage(text) {
