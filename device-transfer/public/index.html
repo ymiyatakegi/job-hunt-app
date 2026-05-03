@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Device Transfer</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-2: #edf2f7;
+      --line: #d4dce8;
+      --text: #172033;
+      --muted: #637083;
+      --accent: #2563eb;
+      --accent-2: #1d4ed8;
+      --danger: #b42318;
+      --shadow: 0 14px 34px rgba(31, 45, 70, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      color: var(--text);
+      background: linear-gradient(180deg, #fbfcff 0%, var(--bg) 100%);
+      font-family: "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
+      line-height: 1.5;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      min-height: 44px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      padding: 14px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      margin: -14px -14px 12px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(245, 247, 251, 0.96);
+      backdrop-filter: blur(10px);
+    }
+
+    h1,
+    h2,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 4px;
+      font-size: 1.34rem;
+      line-height: 1.25;
+    }
+
+    .status {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .panel,
+    .item {
+      margin-bottom: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      padding: 12px;
+    }
+
+    .panel h2 {
+      margin-bottom: 10px;
+      font-size: 1.02rem;
+    }
+
+    textarea,
+    input[type="file"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 11px;
+      background: #fff;
+      color: var(--text);
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .primary {
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .secondary {
+      color: var(--text);
+      border-color: var(--line);
+      background: var(--surface);
+    }
+
+    .danger {
+      color: var(--danger);
+      border-color: rgba(180, 35, 24, 0.28);
+      background: rgba(180, 35, 24, 0.08);
+    }
+
+    .progress {
+      display: none;
+      width: 100%;
+      height: 10px;
+      margin-top: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--surface-2);
+    }
+
+    .progress.is-visible {
+      display: block;
+    }
+
+    .bar {
+      width: 0%;
+      height: 100%;
+      background: var(--accent);
+      transition: width 120ms ease;
+    }
+
+    .list-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 16px 0 10px;
+    }
+
+    .list-head h2 {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+
+    .item {
+      overflow: hidden;
+    }
+
+    .item-body {
+      padding: 12px;
+    }
+
+    .item-meta {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .message {
+      margin: 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .file-name {
+      margin: 0 0 4px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .file-size {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .item-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 0 12px 12px;
+    }
+
+    a.button-link {
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: var(--accent-2);
+      background: var(--surface);
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .empty {
+      margin: 20px 0;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 430px) {
+      .app {
+        padding: 10px;
+      }
+
+      .topbar {
+        margin: -10px -10px 10px;
+        padding: 10px;
+      }
+
+      .buttons,
+      .item-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <h1>Device Transfer</h1>
+      <p id="status" class="status">PCとスマホで同じURLを開いて使います</p>
+    </header>
+
+    <section class="panel">
+      <h2>メッセージ・URLを送る</h2>
+      <textarea id="messageText" placeholder="URL、メモ、文章など"></textarea>
+      <div class="buttons">
+        <button id="sendMessage" class="primary" type="button">送信</button>
+        <button id="clearMessage" class="secondary" type="button">入力を消す</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>ファイル・写真を送る</h2>
+      <input id="fileInput" type="file" multiple>
+      <div class="buttons">
+        <button id="sendFiles" class="primary" type="button">アップロード</button>
+        <button id="clearFiles" class="secondary" type="button">選択を解除</button>
+      </div>
+      <div id="progress" class="progress"><div id="bar" class="bar"></div></div>
+    </section>
+
+    <div class="list-head">
+      <h2>受け渡し一覧</h2>
+      <button id="reload" class="secondary" type="button">更新</button>
+    </div>
+    <div id="items"></div>
+  </main>
+
+  <script>
+    const key = new URL(location.href).searchParams.get("key") || localStorage.getItem("device-transfer-key") || "";
+    if (key) localStorage.setItem("device-transfer-key", key);
+
+    const statusNode = document.getElementById("status");
+    const messageText = document.getElementById("messageText");
+    const fileInput = document.getElementById("fileInput");
+    const itemsNode = document.getElementById("items");
+    const progress = document.getElementById("progress");
+    const bar = document.getElementById("bar");
+
+    document.getElementById("sendMessage").addEventListener("click", sendMessage);
+    document.getElementById("clearMessage").addEventListener("click", () => messageText.value = "");
+    document.getElementById("sendFiles").addEventListener("click", sendFiles);
+    document.getElementById("clearFiles").addEventListener("click", () => fileInput.value = "");
+    document.getElementById("reload").addEventListener("click", loadItems);
+
+    loadItems();
+    setInterval(loadItems, 5000);
+
+    async function sendMessage() {
+      const text = messageText.value.trim();
+      if (!text) return setStatus("送る内容が空です");
+      await api("/api/message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      });
+      messageText.value = "";
+      setStatus("メッセージを送信しました");
+      await loadItems();
+    }
+
+    async function sendFiles() {
+      const files = [...fileInput.files];
+      if (files.length === 0) return setStatus("ファイルが選択されていません");
+
+      progress.classList.add("is-visible");
+      for (let index = 0; index < files.length; index += 1) {
+        const file = files[index];
+        setStatus("アップロード中: " + file.name);
+        await uploadFile(file, (loaded, total) => {
+          const fileProgress = total ? loaded / total : 0;
+          const totalProgress = ((index + fileProgress) / files.length) * 100;
+          bar.style.width = totalProgress.toFixed(1) + "%";
+        });
+      }
+      fileInput.value = "";
+      bar.style.width = "100%";
+      setTimeout(() => {
+        progress.classList.remove("is-visible");
+        bar.style.width = "0%";
+      }, 600);
+      setStatus("アップロードしました");
+      await loadItems();
+    }
+
+    function uploadFile(file, onProgress) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", withKey("/api/upload"));
+        xhr.setRequestHeader("X-Transfer-Key", key);
+        xhr.setRequestHeader("X-File-Name", encodeURIComponent(file.name));
+        xhr.upload.addEventListener("progress", (event) => onProgress(event.loaded, event.total));
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(xhr.responseText));
+          } else {
+            reject(new Error(xhr.responseText || "upload_failed"));
+          }
+        });
+        xhr.addEventListener("error", () => reject(new Error("network_error")));
+        xhr.send(file);
+      });
+    }
+
+    async function loadItems() {
+      try {
+        const items = await api("/api/items");
+        renderItems(items);
+      } catch (error) {
+        setStatus("接続できません。PC側のサーバーが起動しているか確認してください");
+      }
+    }
+
+    function renderItems(items) {
+      itemsNode.innerHTML = "";
+      if (!Array.isArray(items) || items.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = "まだ何もありません";
+        itemsNode.appendChild(empty);
+        return;
+      }
+
+      items.forEach((item) => {
+        const article = document.createElement("article");
+        article.className = "item";
+        const body = document.createElement("div");
+        body.className = "item-body";
+        const meta = document.createElement("p");
+        meta.className = "item-meta";
+        meta.textContent = formatDate(item.createdAt);
+        body.appendChild(meta);
+
+        const actions = document.createElement("div");
+        actions.className = "item-actions";
+
+        if (item.type === "message") {
+          const message = document.createElement("p");
+          message.className = "message";
+          message.textContent = item.text;
+          body.appendChild(message);
+
+          const copy = document.createElement("button");
+          copy.className = "secondary";
+          copy.type = "button";
+          copy.textContent = "コピー";
+          copy.addEventListener("click", () => copyText(item.text));
+          actions.appendChild(copy);
+        } else {
+          const name = document.createElement("p");
+          name.className = "file-name";
+          name.textContent = item.name;
+          const size = document.createElement("p");
+          size.className = "file-size";
+          size.textContent = formatBytes(item.size);
+          body.appendChild(name);
+          body.appendChild(size);
+
+          const link = document.createElement("a");
+          link.className = "button-link";
+          link.href = withKey(item.url);
+          link.textContent = "ダウンロード";
+          actions.appendChild(link);
+        }
+
+        const remove = document.createElement("button");
+        remove.className = "danger";
+        remove.type = "button";
+        remove.textContent = "削除";
+        remove.addEventListener("click", () => deleteItem(item.id));
+        actions.appendChild(remove);
+
+        article.appendChild(body);
+        article.appendChild(actions);
+        itemsNode.appendChild(article);
+      });
+    }
+
+    async function deleteItem(id) {
+      if (!confirm("削除しますか？")) return;
+      await api("/api/items/" + encodeURIComponent(id), { method: "DELETE" });
+      await loadItems();
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        setStatus("コピーしました");
+      } catch {
+        setStatus("コピーできませんでした");
+      }
+    }
+
+    async function api(path, options = {}) {
+      const response = await fetch(withKey(path), {
+        ...options,
+        headers: {
+          "X-Transfer-Key": key,
+          ...(options.headers || {})
+        }
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    }
+
+    function withKey(path) {
+      const separator = path.includes("?") ? "&" : "?";
+      return path + separator + "key=" + encodeURIComponent(key);
+    }
+
+    function setStatus(text) {
+      statusNode.textContent = text;
+    }
+
+    function formatDate(value) {
+      return new Date(value).toLocaleString("ja-JP", {
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function formatBytes(value) {
+      const bytes = Number(value || 0);
+      if (bytes < 1024) return bytes + " B";
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+      if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + " MB";
+      return (bytes / 1024 / 1024 / 1024).toFixed(2) + " GB";
+    }
+  </script>
+</body>
+</html>
