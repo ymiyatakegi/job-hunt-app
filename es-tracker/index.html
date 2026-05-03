@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ES記録</title>
+  <style>
+    :root {
+      --bg: #f6f5f1;
+      --surface: #fffefb;
+      --surface-2: #f0eee7;
+      --line: #d8d2c4;
+      --text: #24231f;
+      --muted: #6b665b;
+      --accent: #176b63;
+      --accent-2: #0f4c47;
+      --danger: #b42318;
+      --shadow: 0 12px 28px rgba(54, 47, 35, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      color: var(--text);
+      background: linear-gradient(180deg, #fbfaf5 0%, var(--bg) 100%);
+      font-family: "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
+      line-height: 1.55;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      min-height: 44px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      padding: 10px 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      padding: 12px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      margin: -12px -12px 12px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(246, 245, 241, 0.96);
+      backdrop-filter: blur(10px);
+    }
+
+    h1,
+    h2,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 4px;
+      font-size: 1.34rem;
+      line-height: 1.25;
+    }
+
+    .status {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .toolbar,
+    .card {
+      margin-bottom: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .toolbar {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .primary {
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .secondary {
+      color: var(--text);
+      border-color: var(--line);
+      background: var(--surface);
+    }
+
+    .danger {
+      color: var(--danger);
+      border-color: rgba(180, 35, 24, 0.28);
+      background: rgba(180, 35, 24, 0.08);
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 11px;
+      color: var(--text);
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 88px;
+      resize: vertical;
+      line-height: 1.65;
+    }
+
+    .answer {
+      min-height: 180px;
+      padding-bottom: 34px;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 800;
+    }
+
+    .card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px;
+      background: var(--surface-2);
+    }
+
+    .card-title {
+      min-width: 0;
+    }
+
+    .card-title h2 {
+      margin: 0 0 2px;
+      font-size: 1.05rem;
+      overflow-wrap: anywhere;
+    }
+
+    .card-title p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .fields {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .answer-wrap {
+      position: relative;
+    }
+
+    .char-count {
+      position: absolute;
+      right: 10px;
+      bottom: 9px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      color: var(--muted);
+      background: rgba(255, 254, 251, 0.92);
+      font-size: 0.78rem;
+      font-weight: 800;
+      pointer-events: none;
+    }
+
+    details {
+      border-top: 1px solid rgba(216, 210, 196, 0.9);
+    }
+
+    summary {
+      min-height: 44px;
+      padding: 12px;
+      color: var(--accent-2);
+      font-weight: 900;
+      cursor: pointer;
+      list-style-position: inside;
+    }
+
+    .structure-fields {
+      display: grid;
+      gap: 10px;
+      padding: 0 12px 12px;
+    }
+
+    .structure-fields textarea {
+      min-height: 72px;
+    }
+
+    .empty {
+      margin: 22px 0;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 430px) {
+      .button-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <h1>ES記録</h1>
+      <p id="status" class="status">保存済み</p>
+    </header>
+
+    <section class="toolbar">
+      <input id="searchInput" type="search" placeholder="問・解答で検索">
+      <div class="button-row">
+        <button id="addEntry" class="primary" type="button">ESを追加</button>
+        <button id="resetAll" class="secondary" type="button">全消去</button>
+      </div>
+    </section>
+
+    <section id="entries"></section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "es-tracker-v1";
+    const entriesNode = document.getElementById("entries");
+    const statusNode = document.getElementById("status");
+    const searchInput = document.getElementById("searchInput");
+
+    let entries = loadEntries();
+    let query = "";
+
+    document.getElementById("addEntry").addEventListener("click", () => {
+      entries.unshift(createEntry());
+      saveEntries();
+      render();
+    });
+
+    document.getElementById("resetAll").addEventListener("click", () => {
+      if (!confirm("すべてのES記録を削除します。よろしいですか？")) return;
+      entries = [createEntry()];
+      saveEntries();
+      render();
+    });
+
+    searchInput.addEventListener("input", (event) => {
+      query = event.target.value.trim().toLowerCase();
+      render();
+    });
+
+    render();
+
+    function render() {
+      entriesNode.innerHTML = "";
+      const filtered = entries.filter((entry) => {
+        const target = [entry.question, entry.answer, entry.purpose, entry.problem, entry.solution, entry.result].join(" ").toLowerCase();
+        return !query || target.includes(query);
+      });
+
+      if (!filtered.length) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = "該当するES記録がありません。";
+        entriesNode.appendChild(empty);
+        return;
+      }
+
+      filtered.forEach((entry, index) => entriesNode.appendChild(createCard(entry, index)));
+    }
+
+    function createCard(entry, index) {
+      const card = document.createElement("article");
+      card.className = "card";
+
+      const head = document.createElement("div");
+      head.className = "card-head";
+      head.innerHTML = '<div class="card-title"><h2 data-title="' + entry.id + '">' + escapeHtml(entry.question || "問未入力") + '</h2><p>' + countChars(entry.answer) + '文字</p></div>';
+
+      const remove = document.createElement("button");
+      remove.className = "danger";
+      remove.type = "button";
+      remove.textContent = "削除";
+      remove.addEventListener("click", () => {
+        if (!confirm("このES記録を削除しますか？")) return;
+        entries = entries.filter((item) => item.id !== entry.id);
+        if (!entries.length) entries = [createEntry()];
+        saveEntries();
+        render();
+      });
+      head.appendChild(remove);
+      card.appendChild(head);
+
+      const fields = document.createElement("div");
+      fields.className = "fields";
+
+      fields.appendChild(textareaField("問", entry.question, "例: 学生時代に力を入れたこと", (value) => {
+        entry.question = value;
+        const title = entriesNode.querySelector('[data-title="' + entry.id + '"]');
+        if (title) title.textContent = value.trim() || "問未入力";
+        persist();
+      }));
+
+      const answerLabel = document.createElement("label");
+      answerLabel.textContent = "解答";
+      const answerWrap = document.createElement("div");
+      answerWrap.className = "answer-wrap";
+      const answer = document.createElement("textarea");
+      answer.className = "answer";
+      answer.value = entry.answer || "";
+      answer.placeholder = "ESの解答を入力";
+      const counter = document.createElement("div");
+      counter.className = "char-count";
+      counter.textContent = countChars(answer.value) + "文字";
+      answer.addEventListener("input", (event) => {
+        entry.answer = event.target.value;
+        counter.textContent = countChars(entry.answer) + "文字";
+        const headCount = card.querySelector(".card-title p");
+        if (headCount) headCount.textContent = countChars(entry.answer) + "文字";
+        persist();
+      });
+      answerWrap.appendChild(answer);
+      answerWrap.appendChild(counter);
+      answerLabel.appendChild(answerWrap);
+      fields.appendChild(answerLabel);
+      card.appendChild(fields);
+
+      const details = document.createElement("details");
+      const summary = document.createElement("summary");
+      summary.textContent = "目的・課題・解決・結果";
+      details.appendChild(summary);
+      const structure = document.createElement("div");
+      structure.className = "structure-fields";
+      structure.appendChild(textareaField("目的", entry.purpose, "何を目的にしたか", (value) => { entry.purpose = value; persist(); }));
+      structure.appendChild(textareaField("課題", entry.problem, "どんな課題があったか", (value) => { entry.problem = value; persist(); }));
+      structure.appendChild(textareaField("解決", entry.solution, "どう解決したか", (value) => { entry.solution = value; persist(); }));
+      structure.appendChild(textareaField("結果", entry.result, "結果どうなったか", (value) => { entry.result = value; persist(); }));
+      details.appendChild(structure);
+      card.appendChild(details);
+
+      return card;
+    }
+
+    function textareaField(labelText, value, placeholder, onInput) {
+      const label = document.createElement("label");
+      label.textContent = labelText;
+      const textarea = document.createElement("textarea");
+      textarea.value = value || "";
+      textarea.placeholder = placeholder;
+      textarea.addEventListener("input", (event) => onInput(event.target.value));
+      label.appendChild(textarea);
+      return label;
+    }
+
+    function persist() {
+      saveEntries();
+    }
+
+    function createEntry() {
+      return {
+        id: "es-" + Date.now() + "-" + Math.random().toString(16).slice(2, 8),
+        question: "",
+        answer: "",
+        purpose: "",
+        problem: "",
+        solution: "",
+        result: "",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    function loadEntries() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        if (Array.isArray(saved) && saved.length) {
+          return saved.map((item) => ({
+            ...createEntry(),
+            ...item,
+            id: item.id || createEntry().id,
+            question: String(item.question || ""),
+            answer: String(item.answer || ""),
+            purpose: String(item.purpose || ""),
+            problem: String(item.problem || ""),
+            solution: String(item.solution || ""),
+            result: String(item.result || "")
+          }));
+        }
+      } catch (error) {
+      }
+      return [createEntry()];
+    }
+
+    function saveEntries() {
+      const now = new Date().toISOString();
+      entries.forEach((entry) => entry.updatedAt = now);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+      statusNode.textContent = "保存済み: " + new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function countChars(value) {
+      return String(value || "").replace(/\r\n/g, "\n").length;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+  </script>
+</body>
+</html>
