@@ -1,0 +1,584 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ITニュース保存アプリ</title>
+  <style>
+    :root {
+      --bg: #f2efe8;
+      --surface: rgba(255, 251, 245, 0.96);
+      --line: #dbc8ab;
+      --text: #2f2418;
+      --muted: #6c6053;
+      --accent: #155e63;
+      --accent-2: #0f4549;
+      --danger: #b42318;
+      --card-a: #edf6ff;
+      --card-b: #fff2e6;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(21, 94, 99, 0.14), transparent 24%),
+        radial-gradient(circle at top right, rgba(191, 151, 91, 0.16), transparent 20%),
+        linear-gradient(180deg, #fbf7f1 0%, var(--bg) 100%);
+    }
+
+    .app {
+      padding: 14px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero,
+    .panel,
+    .news-card {
+      background: var(--surface);
+      border: 1px solid rgba(173, 141, 96, 0.24);
+      border-radius: 24px;
+      box-shadow: 0 18px 40px rgba(79, 55, 26, 0.12);
+    }
+
+    .hero,
+    .panel { padding: 18px; }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 0.84rem;
+    }
+
+    h1, h2, p { margin-top: 0; }
+    h1 {
+      margin-bottom: 10px;
+      font-size: clamp(1.8rem, 6vw, 2.5rem);
+      line-height: 1.1;
+    }
+
+    .lead,
+    .hint,
+    .status,
+    .field-label,
+    .empty-state { color: var(--muted); }
+    .lead { line-height: 1.65; }
+    .hint, .field-label { font-size: 0.9rem; }
+
+    .panel-head,
+    .meta {
+      display: grid;
+      gap: 12px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button, input, textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 12px 16px;
+      font-weight: 800;
+      border: 0;
+    }
+
+    .primary {
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    }
+
+    .secondary {
+      color: var(--text);
+      border: 1px solid var(--line);
+      background: #fffdf9;
+    }
+
+    .danger {
+      color: var(--danger);
+      border: 1px solid rgba(180, 35, 24, 0.2);
+      background: rgba(180, 35, 24, 0.08);
+      padding: 9px 14px;
+    }
+
+    .search-box,
+    .field,
+    .date-company-row {
+      display: grid;
+      gap: 6px;
+    }
+
+    .date-company-row {
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    textarea {
+      width: 100%;
+      border: 1px solid rgba(173, 141, 96, 0.36);
+      border-radius: 16px;
+      background: rgba(255, 253, 250, 0.97);
+      color: var(--text);
+      padding: 11px 12px;
+    }
+
+    textarea {
+      min-height: 72px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+
+    .title-input { min-height: 64px; }
+    .impression-input { min-height: 104px; }
+
+    .news-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .news-card {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .news-card:nth-child(odd) { background: var(--card-a); }
+    .news-card:nth-child(even) { background: var(--card-b); }
+
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .card-number {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: var(--accent-2);
+    }
+
+    .cell-link {
+      color: var(--accent-2);
+      font-weight: 800;
+      text-decoration: none;
+      width: fit-content;
+    }
+
+    .toggle-wrap {
+      display: grid;
+      gap: 8px;
+    }
+
+    .toggle-button {
+      justify-self: start;
+      padding: 7px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(21, 94, 99, 0.18);
+      background: rgba(21, 94, 99, 0.08);
+      color: var(--accent-2);
+      font-weight: 800;
+    }
+
+    .is-hidden { display: none; }
+
+    .empty-state {
+      padding: 22px;
+      background: rgba(173, 141, 96, 0.08);
+      border-radius: 18px;
+      line-height: 1.6;
+    }
+
+    @media (min-width: 900px) {
+      .app {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 28px;
+      }
+
+      .panel-head {
+        grid-template-columns: 1fr auto;
+        align-items: end;
+      }
+
+      .meta {
+        grid-template-columns: 1fr auto;
+        align-items: end;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <p class="eyebrow">IT NEWS STOCK</p>
+      <h1>ITニュース保存アプリ</h1>
+      <p class="lead">スマホ向けに、1件ずつカードで保存する形にしました。要約と感想は折りたたみです。</p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>ニュース一覧</h2>
+          <p class="hint">要約は `▼`、感想はその中の `▼` で開きます。</p>
+        </div>
+        <div class="actions">
+          <button id="addRow" class="primary" type="button">ニュースを追加</button>
+          <button id="resetAll" class="secondary" type="button">全消去</button>
+        </div>
+      </div>
+
+      <div class="meta">
+        <label class="search-box" for="searchInput">
+          <span class="field-label">検索</span>
+          <input id="searchInput" type="text" placeholder="タイトル / 会社名 / 要約 / 感想で絞り込み">
+        </label>
+        <p id="status" class="status">保存済み</p>
+      </div>
+
+      <div id="newsList" class="news-list"></div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "it-news-stock-v1";
+    const newsList = document.getElementById("newsList");
+    const addRowButton = document.getElementById("addRow");
+    const resetAllButton = document.getElementById("resetAll");
+    const searchInput = document.getElementById("searchInput");
+    const statusNode = document.getElementById("status");
+
+    let query = "";
+    let rows = loadRows();
+
+    render();
+    updateStatus();
+
+    addRowButton.addEventListener("click", () => {
+      rows.push(emptyRow());
+      saveRows();
+      render();
+    });
+
+    resetAllButton.addEventListener("click", () => {
+      if (!window.confirm("保存したニュースをすべて削除します。よろしいですか？")) {
+        return;
+      }
+      rows = [emptyRow()];
+      saveRows();
+      render();
+    });
+
+    searchInput.addEventListener("input", (event) => {
+      query = event.target.value.trim().toLowerCase();
+      render();
+    });
+
+    function emptyRow() {
+      return {
+        id: `news-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+        title: "",
+        company: "",
+        url: "",
+        date: "",
+        summary: "",
+        impression: "",
+        summaryOpen: false,
+        impressionOpen: false
+      };
+    }
+
+    function loadRows() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        if (Array.isArray(parsed) && parsed.length) {
+          return parsed.map((item) => ({
+            ...emptyRow(),
+            ...item,
+            id: item && item.id ? String(item.id) : emptyRow().id,
+            title: item && item.title ? String(item.title) : "",
+            company: item && item.company ? String(item.company) : "",
+            url: item && item.url ? String(item.url) : "",
+            date: item && item.date ? String(item.date) : "",
+            summary: item && item.summary ? String(item.summary) : "",
+            impression: item && item.impression ? String(item.impression) : "",
+            summaryOpen: !!(item && item.summaryOpen),
+            impressionOpen: !!(item && item.impressionOpen)
+          }));
+        }
+      } catch (error) {
+      }
+      return [emptyRow()];
+    }
+
+    function saveRows() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+      updateStatus();
+    }
+
+    function updateStatus() {
+      statusNode.textContent = `保存済み: ${new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })}`;
+    }
+
+    function render() {
+      newsList.innerHTML = "";
+      const filtered = rows.filter((row) => {
+        const hay = [row.title, row.company, row.url, row.date, row.summary, row.impression].join(" ").toLowerCase();
+        return !query || hay.includes(query);
+      });
+
+      if (!filtered.length) {
+        newsList.innerHTML = '<div class="empty-state">該当するニュースがありません。</div>';
+        return;
+      }
+
+      filtered.forEach((row, index) => {
+        newsList.appendChild(createCard(row, index));
+      });
+    }
+
+    function createCard(row, index) {
+      const card = document.createElement("article");
+      card.className = "news-card";
+
+      const topRow = document.createElement("div");
+      topRow.className = "top-row";
+      const number = document.createElement("div");
+      number.className = "card-number";
+      number.textContent = `ニュース ${index + 1}`;
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "danger";
+      deleteButton.textContent = "削除";
+      deleteButton.addEventListener("click", () => {
+        rows = rows.filter((item) => item.id !== row.id);
+        if (!rows.length) {
+          rows = [emptyRow()];
+        }
+        saveRows();
+        render();
+      });
+      topRow.appendChild(number);
+      topRow.appendChild(deleteButton);
+      card.appendChild(topRow);
+
+      card.appendChild(createTextField(row, "title", "ニュースタイトル", "title-input", 64));
+
+      const dateCompany = document.createElement("div");
+      dateCompany.className = "date-company-row";
+      dateCompany.appendChild(createSimpleField(row, "company", "会社名"));
+      dateCompany.appendChild(createDateField(row));
+      card.appendChild(dateCompany);
+
+      card.appendChild(createUrlField(row));
+      card.appendChild(createDetailField(row));
+      return card;
+    }
+
+    function createTextField(row, key, labelText, className, minHeight) {
+      const wrap = document.createElement("label");
+      wrap.className = "field";
+      const label = document.createElement("span");
+      label.className = "field-label";
+      label.textContent = labelText;
+      const area = document.createElement("textarea");
+      area.className = className;
+      area.value = row[key] || "";
+      area.placeholder = labelText;
+      autoSize(area, minHeight);
+      area.addEventListener("input", (event) => {
+        row[key] = event.target.value;
+        autoSize(event.target, minHeight);
+        saveRows();
+      });
+      wrap.appendChild(label);
+      wrap.appendChild(area);
+      return wrap;
+    }
+
+    function createSimpleField(row, key, labelText) {
+      const wrap = document.createElement("label");
+      wrap.className = "field";
+      const label = document.createElement("span");
+      label.className = "field-label";
+      label.textContent = labelText;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = row[key] || "";
+      input.placeholder = labelText;
+      input.addEventListener("input", (event) => {
+        row[key] = event.target.value;
+        saveRows();
+      });
+      wrap.appendChild(label);
+      wrap.appendChild(input);
+      return wrap;
+    }
+
+    function createDateField(row) {
+      const wrap = document.createElement("label");
+      wrap.className = "field";
+      const label = document.createElement("span");
+      label.className = "field-label";
+      label.textContent = "日付";
+      const input = document.createElement("input");
+      input.type = "date";
+      input.value = row.date || "";
+      input.addEventListener("input", (event) => {
+        row.date = event.target.value;
+        saveRows();
+      });
+      wrap.appendChild(label);
+      wrap.appendChild(input);
+      return wrap;
+    }
+
+    function createUrlField(row) {
+      const wrap = document.createElement("div");
+      wrap.className = "field";
+      const label = document.createElement("span");
+      label.className = "field-label";
+      label.textContent = "URL";
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = row.url || "";
+      input.placeholder = "URL";
+      input.addEventListener("input", (event) => {
+        row.url = event.target.value;
+        saveRows();
+        render();
+      });
+      wrap.appendChild(label);
+      wrap.appendChild(input);
+      const href = normalizeUrl(row.url);
+      if (href) {
+        const link = document.createElement("a");
+        link.className = "cell-link";
+        link.href = href;
+        link.target = "_blank";
+        link.rel = "noreferrer noopener";
+        link.textContent = "リンクを開く";
+        wrap.appendChild(link);
+      }
+      return wrap;
+    }
+
+    function createDetailField(row) {
+      const wrap = document.createElement("div");
+      wrap.className = "toggle-wrap";
+
+      const summaryButton = document.createElement("button");
+      summaryButton.type = "button";
+      summaryButton.className = "toggle-button";
+      summaryButton.textContent = row.summaryOpen ? "▲ 要約" : "▼ 要約";
+      summaryButton.addEventListener("click", () => {
+        row.summaryOpen = !row.summaryOpen;
+        saveRows();
+        render();
+      });
+      wrap.appendChild(summaryButton);
+
+      const summaryBlock = document.createElement("div");
+      summaryBlock.className = row.summaryOpen ? "toggle-wrap" : "toggle-wrap is-hidden";
+      if (row.summaryOpen) {
+        summaryBlock.appendChild(createSummaryArea(row));
+        summaryBlock.appendChild(createImpressionField(row));
+      }
+      wrap.appendChild(summaryBlock);
+      return wrap;
+    }
+
+    function createSummaryArea(row) {
+      const field = document.createElement("label");
+      field.className = "field";
+      const label = document.createElement("span");
+      label.className = "field-label";
+      label.textContent = "要約";
+      const area = document.createElement("textarea");
+      area.value = row.summary || "";
+      area.placeholder = "要約";
+      autoSize(area, 72);
+      area.addEventListener("input", (event) => {
+        row.summary = event.target.value;
+        autoSize(event.target, 72);
+        saveRows();
+      });
+      field.appendChild(label);
+      field.appendChild(area);
+      return field;
+    }
+
+    function createImpressionField(row) {
+      const wrap = document.createElement("div");
+      wrap.className = "toggle-wrap";
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "toggle-button";
+      button.textContent = row.impressionOpen ? "▲ 感想" : "▼ 感想";
+      button.addEventListener("click", () => {
+        row.impressionOpen = !row.impressionOpen;
+        if (row.impressionOpen) {
+          row.summaryOpen = true;
+        }
+        saveRows();
+        render();
+      });
+      wrap.appendChild(button);
+
+      if (row.impressionOpen) {
+        const field = document.createElement("label");
+        field.className = "field";
+        const label = document.createElement("span");
+        label.className = "field-label";
+        label.textContent = "感想";
+        const area = document.createElement("textarea");
+        area.className = "impression-input";
+        area.value = row.impression || "";
+        area.placeholder = "感想";
+        autoSize(area, 104);
+        area.addEventListener("input", (event) => {
+          row.impression = event.target.value;
+          autoSize(event.target, 104);
+          saveRows();
+        });
+        field.appendChild(label);
+        field.appendChild(area);
+        wrap.appendChild(field);
+      }
+      return wrap;
+    }
+
+    function normalizeUrl(value) {
+      const trimmed = String(value || "").trim();
+      if (!trimmed) {
+        return "";
+      }
+      try {
+        const full = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+        return new URL(full).href;
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function autoSize(textarea, minHeight) {
+      textarea.style.height = "0px";
+      textarea.style.height = `${Math.max(textarea.scrollHeight, minHeight)}px`;
+    }
+  </script>
+</body>
+</html>
