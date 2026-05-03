@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>基本情報 スマホ版</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --surface: #ffffff;
+      --surface-2: #eef4f8;
+      --line: #cfdae5;
+      --text: #162233;
+      --muted: #647184;
+      --accent: #2563eb;
+      --accent-2: #1e40af;
+      --danger: #b42318;
+      --ok: #1f8a5f;
+      --ng: #c2412d;
+      --shadow: 0 12px 28px rgba(26, 38, 58, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+
+    body {
+      color: var(--text);
+      background: linear-gradient(180deg, #fbfcff 0%, var(--bg) 100%);
+      font-family: "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
+      line-height: 1.55;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      min-height: 44px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      padding: 10px 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      padding: 12px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      margin: -12px -12px 12px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(244, 247, 251, 0.96);
+      backdrop-filter: blur(10px);
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: 4px;
+      font-size: 1.34rem;
+      line-height: 1.25;
+    }
+
+    .status {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .tab {
+      min-height: 40px;
+      padding: 8px 6px;
+      color: var(--muted);
+      border-color: var(--line);
+      background: var(--surface);
+      font-size: 0.9rem;
+    }
+
+    .tab.is-active {
+      color: #fff;
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    .view { display: none; }
+    .view.is-active { display: block; }
+
+    .panel,
+    .word-card,
+    .quiz-card,
+    .record-card {
+      margin-bottom: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel,
+    .quiz-card,
+    .record-card {
+      padding: 12px;
+    }
+
+    .toolbar,
+    .form-grid,
+    .button-row,
+    .stats-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .button-row,
+    .stats-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .primary { color: #fff; background: var(--accent); }
+    .secondary { color: var(--text); border-color: var(--line); background: var(--surface); }
+    .danger { color: var(--danger); border-color: rgba(180, 35, 24, 0.28); background: rgba(180, 35, 24, 0.08); }
+    .ok { color: #fff; background: var(--ok); }
+    .ng { color: #fff; background: var(--ng); }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 11px;
+      color: var(--text);
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 800;
+    }
+
+    .word-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px;
+      background: var(--surface-2);
+    }
+
+    .word-title {
+      min-width: 0;
+    }
+
+    .word-title h2 {
+      margin: 0 0 2px;
+      font-size: 1.05rem;
+      overflow-wrap: anywhere;
+    }
+
+    .word-title p,
+    .muted {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    details {
+      border-top: 1px solid rgba(207, 218, 229, 0.86);
+    }
+
+    summary {
+      min-height: 44px;
+      padding: 12px;
+      color: var(--accent-2);
+      font-weight: 800;
+      cursor: pointer;
+      list-style-position: inside;
+    }
+
+    .fields {
+      display: grid;
+      gap: 10px;
+      padding: 0 12px 12px;
+    }
+
+    .preview {
+      max-width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    .question-word {
+      margin: 8px 0 12px;
+      font-size: 1.72rem;
+      font-weight: 900;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .answer {
+      display: none;
+      margin-top: 12px;
+      border-radius: 12px;
+      padding: 12px;
+      background: var(--surface-2);
+    }
+
+    .answer.is-visible {
+      display: grid;
+      gap: 10px;
+    }
+
+    .answer-note {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: var(--surface-2);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 1.25rem;
+    }
+
+    .chart {
+      display: grid;
+      gap: 8px;
+    }
+
+    .chart-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 5px;
+    }
+
+    .bar-label {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .track {
+      height: 18px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e4ebf2;
+    }
+
+    .fill {
+      height: 100%;
+      background: var(--accent);
+    }
+
+    .empty {
+      padding: 18px 10px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 430px) {
+      .button-row,
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <h1>基本情報 スマホ版</h1>
+      <p id="status" class="status">保存済み</p>
+      <nav class="tabs" aria-label="ページ切り替え">
+        <button class="tab is-active" type="button" data-view="words">単語帳</button>
+        <button class="tab" type="button" data-view="quiz">テスト</button>
+        <button class="tab" type="button" data-view="records">記録</button>
+      </nav>
+    </header>
+
+    <section id="words" class="view is-active">
+      <div class="panel toolbar">
+        <input id="searchWord" type="search" placeholder="ワード・解説で検索">
+        <div class="button-row">
+          <button id="addWord" class="primary" type="button">ワードを追加</button>
+          <button id="resetWords" class="secondary" type="button">全消去</button>
+        </div>
+      </div>
+      <div id="wordList"></div>
+    </section>
+
+    <section id="quiz" class="view">
+      <div class="panel form-grid">
+        <div class="stats-grid">
+          <div class="metric"><span>問題数</span><strong id="availableCount">0</strong></div>
+          <div class="metric"><span>50%以下</span><strong id="lowAccuracyCount">0</strong></div>
+        </div>
+        <label>出題する系<select id="categoryGroupFilter"></select></label>
+        <label>出題する分野<select id="categoryFieldFilter"></select></label>
+        <label>50%以下の問題のみ<select id="lowAccuracyOnly"><option value="off">しない</option><option value="on">する</option></select></label>
+        <label>出題問題数<input id="questionCount" type="number" min="1" step="1" value="10"></label>
+        <button id="startQuiz" class="primary" type="button">開始</button>
+      </div>
+      <div id="quizArea"></div>
+    </section>
+
+    <section id="records" class="view">
+      <div id="recordSummary" class="stats-grid"></div>
+      <div class="record-card">
+        <h2>日別の達成ワード数</h2>
+        <div id="dailyChart" class="chart"></div>
+      </div>
+      <div class="record-card">
+        <h2>分野ごとの達成ワード数</h2>
+        <div id="fieldChart" class="chart"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="../基本情報/data.js"></script>
+  <script>
+    const statusNode = document.getElementById("status");
+    const wordList = document.getElementById("wordList");
+    const searchWord = document.getElementById("searchWord");
+    const availableCount = document.getElementById("availableCount");
+    const lowAccuracyCount = document.getElementById("lowAccuracyCount");
+    const categoryGroupFilter = document.getElementById("categoryGroupFilter");
+    const categoryFieldFilter = document.getElementById("categoryFieldFilter");
+    const lowAccuracyOnly = document.getElementById("lowAccuracyOnly");
+    const questionCount = document.getElementById("questionCount");
+    const quizArea = document.getElementById("quizArea");
+    const recordSummary = document.getElementById("recordSummary");
+    const dailyChart = document.getElementById("dailyChart");
+    const fieldChart = document.getElementById("fieldChart");
+
+    let words = loadWords();
+    let stats = loadStats();
+    let query = "";
+    let session = null;
+
+    init();
+
+    function init() {
+      document.querySelectorAll(".tab").forEach((tab) => {
+        tab.addEventListener("click", () => switchView(tab.dataset.view));
+      });
+
+      document.getElementById("addWord").addEventListener("click", () => {
+        words.unshift(createWord());
+        saveWords(words);
+        updateStatus();
+        renderWords();
+      });
+
+      document.getElementById("resetWords").addEventListener("click", () => {
+        if (!confirm("単語帳をすべて削除します。よろしいですか？")) return;
+        words = [createWord()];
+        saveWords(words);
+        updateStatus();
+        renderWords();
+      });
+
+      searchWord.addEventListener("input", (event) => {
+        query = event.target.value.trim().toLowerCase();
+        renderWords();
+      });
+
+      categoryGroupFilter.addEventListener("change", () => fillFieldFilterOptions(categoryGroupFilter.value));
+      document.getElementById("startQuiz").addEventListener("click", startQuiz);
+
+      initializeFilters();
+      renderWords();
+      refreshCounts();
+      renderQuizHome();
+      renderRecords();
+    }
+
+    function switchView(id) {
+      document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("is-active", tab.dataset.view === id));
+      document.querySelectorAll(".view").forEach((view) => view.classList.toggle("is-active", view.id === id));
+      if (id === "quiz") refreshCounts();
+      if (id === "records") renderRecords();
+    }
+
+    function renderWords() {
+      wordList.innerHTML = "";
+      const filtered = words.filter((item) => {
+        const target = [item.word, item.note, item.noteImageName, getFieldLabel(item)].join(" ").toLowerCase();
+        return !query || target.includes(query);
+      });
+
+      if (!filtered.length) {
+        wordList.appendChild(emptyNode("該当するワードがありません。"));
+        return;
+      }
+
+      filtered.forEach((item) => wordList.appendChild(createWordCard(item)));
+    }
+
+    function createWordCard(item) {
+      const card = document.createElement("article");
+      card.className = "word-card";
+      const head = document.createElement("div");
+      head.className = "word-head";
+      head.innerHTML = '<div class="word-title"><h2 data-title="' + item.id + '">' + escapeHtml(item.word || "ワード未入力") + '</h2><p>' + escapeHtml(getFieldLabel(item)) + '</p></div>';
+      const remove = document.createElement("button");
+      remove.className = "danger";
+      remove.type = "button";
+      remove.textContent = "削除";
+      remove.addEventListener("click", () => {
+        words = words.filter((entry) => entry.id !== item.id);
+        if (!words.length) words = [createWord()];
+        saveWords(words);
+        updateStatus();
+        renderWords();
+      });
+      head.appendChild(remove);
+      card.appendChild(head);
+
+      const details = document.createElement("details");
+      details.open = !item.word;
+      const summary = document.createElement("summary");
+      summary.textContent = "編集";
+      details.appendChild(summary);
+      const fields = document.createElement("div");
+      fields.className = "fields";
+
+      const groupLabel = document.createElement("label");
+      groupLabel.textContent = "出題する系";
+      const groupSelect = document.createElement("select");
+      Object.keys(FIELD_TREE).forEach((group) => {
+        const option = document.createElement("option");
+        option.value = group;
+        option.textContent = group;
+        option.selected = item.categoryGroup === group;
+        groupSelect.appendChild(option);
+      });
+      groupLabel.appendChild(groupSelect);
+
+      const fieldLabel = document.createElement("label");
+      fieldLabel.textContent = "分野";
+      const fieldSelect = document.createElement("select");
+      fillFieldSelect(fieldSelect, item.categoryGroup, item.categoryField);
+      fieldLabel.appendChild(fieldSelect);
+
+      groupSelect.addEventListener("change", (event) => {
+        item.categoryGroup = event.target.value;
+        item.categoryField = FIELD_TREE[item.categoryGroup][0];
+        fillFieldSelect(fieldSelect, item.categoryGroup, item.categoryField);
+        persistWord(item, true);
+      });
+
+      fieldSelect.addEventListener("change", (event) => {
+        item.categoryField = event.target.value;
+        persistWord(item, true);
+      });
+
+      fields.appendChild(groupLabel);
+      fields.appendChild(fieldLabel);
+      fields.appendChild(textareaField("ワード", item.word, "覚えていないワード", (value) => {
+        item.word = value;
+        const title = wordList.querySelector('[data-title="' + item.id + '"]');
+        if (title) title.textContent = value.trim() || "ワード未入力";
+        persistWord(item, false);
+      }));
+      fields.appendChild(textareaField("解説", item.note, "意味、特性、出題箇所のメモ", (value) => {
+        item.note = value;
+        persistWord(item, false);
+      }));
+
+      const imageLabel = document.createElement("label");
+      imageLabel.textContent = "解説画像";
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = "image/*";
+      fileInput.addEventListener("change", async (event) => {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        item.noteImageData = await readFileAsDataUrl(file);
+        item.noteImageName = file.name;
+        persistWord(item, true);
+      });
+      imageLabel.appendChild(fileInput);
+      fields.appendChild(imageLabel);
+
+      if (item.noteImageData) {
+        const clear = document.createElement("button");
+        clear.className = "secondary";
+        clear.type = "button";
+        clear.textContent = "画像削除";
+        clear.addEventListener("click", () => {
+          item.noteImageData = "";
+          item.noteImageName = "";
+          persistWord(item, true);
+        });
+        const image = document.createElement("img");
+        image.className = "preview";
+        image.src = item.noteImageData;
+        image.alt = item.noteImageName || "解説画像";
+        fields.appendChild(clear);
+        fields.appendChild(image);
+      }
+
+      details.appendChild(fields);
+      card.appendChild(details);
+      return card;
+    }
+
+    function textareaField(labelText, value, placeholder, onInput) {
+      const label = document.createElement("label");
+      label.textContent = labelText;
+      const textarea = document.createElement("textarea");
+      textarea.value = value || "";
+      textarea.placeholder = placeholder;
+      textarea.addEventListener("input", (event) => onInput(event.target.value));
+      label.appendChild(textarea);
+      return label;
+    }
+
+    function persistWord(item, shouldRender) {
+      item.updatedAt = new Date().toISOString();
+      saveWords(words);
+      updateStatus();
+      if (shouldRender) renderWords();
+    }
+
+    function initializeFilters() {
+      categoryGroupFilter.innerHTML = '<option value="all">すべて</option>';
+      Object.keys(FIELD_TREE).forEach((group) => {
+        const option = document.createElement("option");
+        option.value = group;
+        option.textContent = group;
+        categoryGroupFilter.appendChild(option);
+      });
+      fillFieldFilterOptions("all");
+    }
+
+    function fillFieldFilterOptions(group) {
+      categoryFieldFilter.innerHTML = '<option value="all">すべて</option>';
+      const fields = group === "all" ? FIELD_OPTIONS.map((item) => item.label) : FIELD_TREE[group];
+      fields.forEach((field) => {
+        const option = document.createElement("option");
+        option.value = field;
+        option.textContent = field;
+        categoryFieldFilter.appendChild(option);
+      });
+    }
+
+    function fillFieldSelect(select, group, selectedField) {
+      select.innerHTML = "";
+      FIELD_TREE[group].forEach((field) => {
+        const option = document.createElement("option");
+        option.value = field;
+        option.textContent = field;
+        option.selected = field === selectedField;
+        select.appendChild(option);
+      });
+    }
+
+    function refreshCounts() {
+      words = loadWords();
+      stats = loadStats();
+      const available = validWords();
+      availableCount.textContent = String(available.length);
+      lowAccuracyCount.textContent = String(available.filter(isLowAccuracyWord).length);
+      questionCount.max = String(Math.max(available.length, 1));
+    }
+
+    function validWords() {
+      return loadWords().filter((item) => item.word.trim() && (item.note.trim() || item.noteImageData));
+    }
+
+    function renderQuizHome() {
+      quizArea.innerHTML = '<div class="empty">条件を決めて「開始」を押してください。</div>';
+    }
+
+    function startQuiz() {
+      refreshCounts();
+      const sourceWords = validWords();
+      if (!sourceWords.length) {
+        quizArea.innerHTML = '<div class="empty">先に単語帳でワードと解説を登録してください。</div>';
+        return;
+      }
+      const selectedGroup = categoryGroupFilter.value;
+      const selectedField = categoryFieldFilter.value;
+      const lowOnly = lowAccuracyOnly.value === "on";
+      const candidates = sourceWords.filter((word) => {
+        if (selectedGroup !== "all" && word.categoryGroup !== selectedGroup) return false;
+        if (selectedField !== "all") {
+          if (selectedGroup === "all" && getFieldLabel(word) !== selectedField) return false;
+          if (selectedGroup !== "all" && word.categoryField !== selectedField) return false;
+        }
+        return !lowOnly || isLowAccuracyWord(word);
+      });
+      if (!candidates.length) {
+        quizArea.innerHTML = '<div class="empty">条件に合う問題がありません。</div>';
+        return;
+      }
+      const requested = Math.max(1, Number(questionCount.value) || 1);
+      session = { queue: shuffle(candidates).slice(0, Math.min(requested, candidates.length)), index: 0, answered: 0, correct: 0 };
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      if (!session || session.index >= session.queue.length) {
+        const rate = session && session.answered ? Math.round((session.correct / session.answered) * 100) : 0;
+        quizArea.innerHTML = '<div class="quiz-card"><p>終了しました。</p><p>回答数: ' + session.answered + ' / ○: ' + session.correct + ' / ○率: ' + rate + '%</p></div>';
+        renderRecords();
+        return;
+      }
+      const current = session.queue[session.index];
+      const stat = stats[current.id] || emptyStats();
+      quizArea.innerHTML = "";
+      const card = document.createElement("article");
+      card.className = "quiz-card";
+      card.innerHTML = '<p class="muted">問題 ' + (session.index + 1) + ' / ' + session.queue.length + '</p><div class="question-word">' + escapeHtml(current.word) + '</div>';
+      const answer = document.createElement("div");
+      answer.className = "answer";
+      answer.innerHTML = '<strong>出題範囲</strong><div>' + escapeHtml(getFieldLabel(current)) + '</div><strong>解説</strong><div class="answer-note">' + escapeHtml(current.note || "画像のみ登録") + '</div><p class="muted">試行: ' + stat.attempts + ' / 正解: ' + stat.correct + ' / 正解率: ' + (stat.attempts ? Math.round(calcAccuracy(stat) * 100) + "%" : "未回答") + '</p>';
+      if (current.noteImageData) {
+        const image = document.createElement("img");
+        image.className = "preview";
+        image.src = current.noteImageData;
+        image.alt = current.noteImageName || "解説画像";
+        answer.appendChild(image);
+      }
+      const actions = document.createElement("div");
+      actions.className = "button-row";
+      const show = button("解答を見る", "secondary", () => answer.classList.add("is-visible"));
+      const ok = button("○", "ok", () => submitAnswer(current, true));
+      const ng = button("×", "ng", () => submitAnswer(current, false));
+      actions.appendChild(show);
+      actions.appendChild(ok);
+      actions.appendChild(ng);
+      card.appendChild(answer);
+      card.appendChild(actions);
+      quizArea.appendChild(card);
+    }
+
+    function submitAnswer(word, isCorrect) {
+      answerWord(stats, word.id, isCorrect, new Date());
+      saveStats(stats);
+      session.answered += 1;
+      if (isCorrect) session.correct += 1;
+      session.index += 1;
+      renderQuestion();
+    }
+
+    function renderRecords() {
+      const latestWords = validWords();
+      const latestStats = loadStats();
+      const mastered = latestWords.filter((word) => isMastered(latestStats[word.id])).length;
+      const attempts = latestWords.reduce((sum, word) => sum + (latestStats[word.id] ? latestStats[word.id].attempts : 0), 0);
+      const correct = latestWords.reduce((sum, word) => sum + (latestStats[word.id] ? latestStats[word.id].correct : 0), 0);
+      const rate = attempts ? Math.round((correct / attempts) * 100) : 0;
+      recordSummary.innerHTML = '<div class="metric"><span>達成ワード</span><strong>' + mastered + '</strong></div><div class="metric"><span>全回答</span><strong>' + attempts + '</strong></div><div class="metric"><span>全体正解率</span><strong>' + rate + '%</strong></div><div class="metric"><span>正解数</span><strong>' + correct + '</strong></div>';
+      renderDailyChart(latestWords, latestStats);
+      renderFieldChart(latestWords, latestStats);
+    }
+
+    function renderDailyChart(latestWords, latestStats) {
+      dailyChart.innerHTML = "";
+      const start = new Date("2026-04-15T00:00:00");
+      const end = new Date("2026-04-23T00:00:00");
+      const rows = [];
+      for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+        const day = new Date(date);
+        rows.push({
+          label: (day.getMonth() + 1) + "/" + day.getDate(),
+          value: latestWords.filter((word) => isMastered(buildMasteredStatsAt(latestStats[word.id], endOfDay(day)))).length
+        });
+      }
+      renderBars(dailyChart, rows, Math.max(1, ...rows.map((item) => item.value), 500), "");
+    }
+
+    function renderFieldChart(latestWords, latestStats) {
+      fieldChart.innerHTML = "";
+      const rows = FIELD_OPTIONS.map((option) => ({
+        label: option.label,
+        value: latestWords.filter((word) => word.categoryGroup === option.group && word.categoryField === option.field && isMastered(latestStats[word.id])).length
+      }));
+      renderBars(fieldChart, rows, 30, "/30");
+    }
+
+    function renderBars(root, rows, max, suffix) {
+      rows.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "chart-row";
+        row.innerHTML = '<div class="bar-label">' + escapeHtml(item.label) + ' ' + item.value + suffix + '</div><div class="track"><div class="fill" style="width:' + Math.min(100, (item.value / max) * 100) + '%"></div></div>';
+        root.appendChild(row);
+      });
+    }
+
+    function isLowAccuracyWord(word) {
+      const stat = stats[word.id];
+      return !!stat && stat.attempts > 0 && calcAccuracy(stat) <= 0.5;
+    }
+
+    function button(text, className, onClick) {
+      const node = document.createElement("button");
+      node.type = "button";
+      node.className = className;
+      node.textContent = text;
+      node.addEventListener("click", onClick);
+      return node;
+    }
+
+    function updateStatus() {
+      statusNode.textContent = "保存済み: " + new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function emptyNode(text) {
+      const node = document.createElement("div");
+      node.className = "empty";
+      node.textContent = text;
+      return node;
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+  </script>
+</body>
+</html>
