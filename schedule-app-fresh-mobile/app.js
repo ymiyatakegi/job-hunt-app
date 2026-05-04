@@ -1,4 +1,4 @@
-﻿const STORAGE_KEY = "schedule-app-fresh-mobile-v1";
+﻿const STORAGE_KEY = "schedule-app-fresh-mobile-v2";
 const START_HOUR = 8;
 const END_HOUR = 23;
 const DAY_COUNT = 14;
@@ -10,12 +10,14 @@ const CATEGORY_META = {
   partTime: { label: "バイト", color: "#7c5cff" },
   work: { label: "作業", color: "#2a9d8f" },
   sleep: { label: "睡眠", color: "#355070" },
+  jobHunt: { label: "就活", color: "#d264b6" },
 };
 
 const state = loadState();
 const ui = {
   modalOpen: false,
   editingId: null,
+  modalSeed: null,
   baseDate: alignBaseDate(state.baseDate || todayDateString()),
 };
 
@@ -26,17 +28,16 @@ function fallbackState() {
   return {
     baseDate: alignBaseDate(todayDateString()),
     events: [],
+    dayPlans: {},
+    dayTodos: {},
   };
 }
 
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return fallbackState();
-    }
-    const parsed = JSON.parse(raw);
-    return normalizeState(parsed);
+    if (!raw) return fallbackState();
+    return normalizeState(JSON.parse(raw));
   } catch {
     return fallbackState();
   }
@@ -44,8 +45,12 @@ function loadState() {
 
 function normalizeState(input) {
   const base = fallbackState();
+  const dayPlans = input && typeof input.dayPlans === "object" && input.dayPlans ? input.dayPlans : {};
+  const dayTodos = input && typeof input.dayTodos === "object" && input.dayTodos ? input.dayTodos : {};
   return {
     baseDate: alignBaseDate(input && input.baseDate ? String(input.baseDate) : base.baseDate),
+    dayPlans: normalizeMap(dayPlans),
+    dayTodos: normalizeMap(dayTodos),
     events: Array.isArray(input && input.events)
       ? input.events.map((event) => ({
           id: event && event.id ? String(event.id) : cryptoId(),
@@ -64,6 +69,14 @@ function normalizeState(input) {
   };
 }
 
+function normalizeMap(source) {
+  const result = {};
+  Object.entries(source).forEach(([key, value]) => {
+    result[String(key)] = typeof value === "string" ? value : "";
+  });
+  return result;
+}
+
 function saveState() {
   state.baseDate = ui.baseDate;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -77,13 +90,13 @@ function render() {
       <section class="hero">
         <p class="eyebrow">TWO WEEK SCHEDULE</p>
         <h1>2週間スケジュール</h1>
-        <p>スマホ用に、2週間を横に並べた時間割です。8:00から23:00までを1時間ごとに見られます。</p>
+        <p>スマホ用に、2週間を横に並べた時間割です。上段に一日の予定と締め切りtodo、下に8:00から23:00の時間割を置いています。</p>
       </section>
 
       <section class="toolbar">
         <div>
           <div class="current-range">${rangeLabel(days[0], days[days.length - 1])}</div>
-          <p class="toolbar-copy">セルをタップすると予定を追加できます。予定をタップすると編集できます。</p>
+          <p class="toolbar-copy">時間は左に固定されます。セルをタップすると予定を追加、予定ブロックをタップすると編集できます。</p>
         </div>
         <div class="toolbar-actions">
           <div class="nav-actions">
@@ -97,10 +110,10 @@ function render() {
       <section class="legend">
         <div>
           <h2>色分け</h2>
-          <p class="legend-copy">移動 / 遊び / バイト / 作業 / 睡眠</p>
+          <p class="legend-copy">移動 / 遊び / バイト / 作業 / 睡眠 / 就活</p>
         </div>
         <div class="legend-list">
-          ${Object.entries(CATEGORY_META).map(([key, meta]) => `
+          ${Object.values(CATEGORY_META).map((meta) => `
             <span class="legend-item"><span class="legend-swatch" style="background:${meta.color}"></span>${meta.label}</span>
           `).join("")}
         </div>
@@ -118,6 +131,7 @@ function render() {
 
   bindToolbar();
   bindGridInteractions();
+  bindDayNotes();
   bindModalInteractions();
 }
 
@@ -131,6 +145,26 @@ function renderGrid(days, events) {
       <div class="day-header ${isToday ? "is-today" : ""}">
         <div class="day-date">${date.getMonth() + 1}/${date.getDate()}</div>
         <div class="day-week">${WEEKDAY[date.getDay()]}</div>
+      </div>
+    `);
+  });
+
+  gridChildren.push('<div class="section-sticky">一日予定</div>');
+  days.forEach((dateString) => {
+    const isToday = dateString === todayDateString();
+    gridChildren.push(`
+      <div class="plan-cell ${isToday ? "is-today" : ""}">
+        <textarea data-plan-date="${dateString}" placeholder="その日の大枠">${esc(state.dayPlans[dateString] || "")}</textarea>
+      </div>
+    `);
+  });
+
+  gridChildren.push('<div class="section-sticky">締切todo</div>');
+  days.forEach((dateString) => {
+    const isToday = dateString === todayDateString();
+    gridChildren.push(`
+      <div class="todo-cell ${isToday ? "is-today" : ""}">
+        <textarea data-todo-date="${dateString}" placeholder="今日締切のtodo">${esc(state.dayTodos[dateString] || "")}</textarea>
       </div>
     `);
   });
@@ -153,9 +187,9 @@ function renderGrid(days, events) {
 
 function renderEventBlock(event) {
   const dayIndex = dayOffset(ui.baseDate, event.date);
-  const top = 56 + (event.startHour - START_HOUR) * 58 + 4;
-  const left = 68 + dayIndex * 108;
-  const height = (event.endHour - event.startHour + 1) * 58 - 8;
+  const top = 58 + 88 + 74 + (event.startHour - START_HOUR) * 56 + 4;
+  const left = 72 + dayIndex * 96;
+  const height = (event.endHour - event.startHour + 1) * 56 - 8;
   const meta = CATEGORY_META[event.category];
   return `
     <button
@@ -172,9 +206,9 @@ function renderEventBlock(event) {
 
 function renderModal() {
   const event = ui.editingId ? state.events.find((item) => item.id === ui.editingId) : null;
-  const draftDate = event ? event.date : todayWithinRange();
-  const startHour = event ? event.startHour : 8;
-  const endHour = event ? event.endHour : 8;
+  const draftDate = event ? event.date : (ui.modalSeed ? ui.modalSeed.date : todayWithinRange());
+  const startHour = event ? event.startHour : (ui.modalSeed ? ui.modalSeed.hour : START_HOUR);
+  const endHour = event ? event.endHour : (ui.modalSeed ? ui.modalSeed.hour : START_HOUR);
   const category = event ? event.category : "work";
   const title = event ? event.title : "";
   const note = event ? event.note : "";
@@ -206,7 +240,7 @@ function renderModal() {
           </div>
           <label class="field">
             <span>種類</span>
-            <select class="category-select" name="category">${categoryOptions(category)}</select>
+            <select name="category">${categoryOptions(category)}</select>
             <div class="category-preview"><span class="dot" style="background:${preview.color}"></span>${preview.label}</div>
           </label>
           <label class="field">
@@ -232,15 +266,9 @@ function bindToolbar() {
   app.querySelectorAll("[data-action]").forEach((button) => {
     button.addEventListener("click", () => {
       const action = button.dataset.action;
-      if (action === "prev") {
-        ui.baseDate = addDaysString(ui.baseDate, -DAY_COUNT);
-      }
-      if (action === "next") {
-        ui.baseDate = addDaysString(ui.baseDate, DAY_COUNT);
-      }
-      if (action === "today") {
-        ui.baseDate = alignBaseDate(todayDateString());
-      }
+      if (action === "prev") ui.baseDate = addDaysString(ui.baseDate, -DAY_COUNT);
+      if (action === "next") ui.baseDate = addDaysString(ui.baseDate, DAY_COUNT);
+      if (action === "today") ui.baseDate = alignBaseDate(todayDateString());
       saveState();
       render();
     });
@@ -251,22 +279,33 @@ function bindGridInteractions() {
   app.querySelectorAll(".cell[data-date][data-hour]").forEach((cell) => {
     cell.addEventListener("click", () => {
       ui.editingId = null;
-      ui.modalOpen = true;
       ui.modalSeed = { date: cell.dataset.date, hour: Number(cell.dataset.hour) };
+      ui.modalOpen = true;
       render();
-      const modal = document.getElementById("eventModal");
-      const form = modal.querySelector("#eventForm");
-      form.elements.date.value = cell.dataset.date;
-      form.elements.startHour.value = cell.dataset.hour;
-      form.elements.endHour.value = cell.dataset.hour;
     });
   });
 
   app.querySelectorAll(".event-block[data-event-id]").forEach((button) => {
     button.addEventListener("click", () => {
       ui.editingId = button.dataset.eventId;
+      ui.modalSeed = null;
       ui.modalOpen = true;
       render();
+    });
+  });
+}
+
+function bindDayNotes() {
+  app.querySelectorAll("textarea[data-plan-date]").forEach((node) => {
+    node.addEventListener("input", (event) => {
+      state.dayPlans[event.target.dataset.planDate] = event.target.value;
+      saveState();
+    });
+  });
+  app.querySelectorAll("textarea[data-todo-date]").forEach((node) => {
+    node.addEventListener("input", (event) => {
+      state.dayTodos[event.target.dataset.todoDate] = event.target.value;
+      saveState();
     });
   });
 }
@@ -274,10 +313,9 @@ function bindGridInteractions() {
 function bindModalInteractions() {
   const modal = document.getElementById("eventModal");
   if (!modal) return;
+
   modal.addEventListener("click", (event) => {
-    if (event.target === modal) {
-      closeModal();
-    }
+    if (event.target === modal) closeModal();
   });
 
   modal.querySelectorAll("[data-modal-action='close']").forEach((button) => {
@@ -290,7 +328,6 @@ function bindModalInteractions() {
       state.events = state.events.filter((item) => item.id !== ui.editingId);
       saveState();
       closeModal();
-      render();
     });
   }
 
@@ -317,25 +354,13 @@ function bindModalInteractions() {
     if (entry.endHour < entry.startHour) {
       [entry.startHour, entry.endHour] = [entry.endHour, entry.startHour];
     }
-
-    const existingIndex = state.events.findIndex((item) => item.id === entry.id);
-    if (existingIndex >= 0) {
-      state.events[existingIndex] = entry;
-    } else {
-      state.events.push(entry);
-    }
-
+    const index = state.events.findIndex((item) => item.id === entry.id);
+    if (index >= 0) state.events[index] = entry;
+    else state.events.push(entry);
     state.events.sort((a, b) => a.date.localeCompare(b.date) || a.startHour - b.startHour);
     saveState();
     closeModal();
-    render();
   });
-
-  if (!ui.editingId && ui.modalSeed) {
-    form.elements.date.value = ui.modalSeed.date;
-    form.elements.startHour.value = String(ui.modalSeed.hour);
-    form.elements.endHour.value = String(ui.modalSeed.hour);
-  }
 }
 
 function closeModal() {
