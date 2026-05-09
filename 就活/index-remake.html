@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>就活情報アプリ リメイク</title>
+  <style>
+    :root {
+      --bg: #f5f1ea;
+      --surface: #fffaf3;
+      --surface-2: #f1e7d8;
+      --line: #d5c4aa;
+      --text: #2b241c;
+      --muted: #6b6054;
+      --accent: #146c63;
+      --accent-2: #0f514b;
+      --danger: #b42318;
+      --start: #2f7d6d;
+      --deadline: #c2410c;
+      --test: #6d597a;
+      --interview: #2563eb;
+      --row-a: #eef6ff;
+      --row-b: #fff3e4;
+      --small: 150px;
+      --medium: 230px;
+      --large: 320px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 8% 0%, rgba(20, 108, 99, 0.16), transparent 28%),
+        radial-gradient(circle at 96% 4%, rgba(194, 65, 12, 0.12), transparent 25%),
+        linear-gradient(180deg, #fbf8f1 0%, var(--bg) 100%);
+    }
+
+    button, input, textarea { font: inherit; }
+    button {
+      cursor: pointer;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      padding: 10px 14px;
+      font-weight: 700;
+      transition: transform 140ms ease, border-color 140ms ease, background-color 140ms ease;
+    }
+    button:hover { transform: translateY(-1px); }
+    .app { padding: 28px; }
+    .hero, .panel, .schedule-panel, .modal-card {
+      background: rgba(255, 250, 243, 0.94);
+      border: 1px solid rgba(181, 151, 109, 0.28);
+      border-radius: 8px;
+      box-shadow: 0 16px 36px rgba(70, 52, 30, 0.12);
+    }
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: end;
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; font-size: clamp(1.8rem, 2vw + 1.2rem, 3rem); line-height: 1.15; }
+    .hero p:last-child { margin: 10px 0 0; color: var(--muted); }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .primary { color: #fff; background: var(--accent); }
+    .secondary { color: var(--text); background: #fffdf9; border-color: var(--line); }
+    .danger { color: var(--danger); background: rgba(180, 35, 24, 0.08); border-color: rgba(180, 35, 24, 0.2); }
+    .panel, .schedule-panel { padding: 16px; margin-bottom: 18px; }
+    .meta, .schedule-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .meta p, .schedule-title h2, .schedule-title p, .day-number, .empty-note, .modal-head h3, .modal-head p { margin: 0; }
+    .search-box { display: flex; flex-direction: column; gap: 6px; }
+    .search-box label, .field-label { color: var(--muted); font-size: 0.86rem; font-weight: 700; }
+    input[type="text"], input[type="url"], input[type="date"], select, textarea {
+      width: 100%;
+      border: 1px solid rgba(181, 151, 109, 0.4);
+      border-radius: 8px;
+      background: rgba(255, 253, 249, 0.98);
+      color: var(--text);
+    }
+    input[type="text"], input[type="url"], input[type="date"], select { min-height: 40px; padding: 8px 10px; }
+    textarea { min-height: 82px; padding: 9px 10px; resize: vertical; line-height: 1.45; }
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid rgba(20, 108, 99, 0.16);
+      border-color: var(--accent);
+    }
+    .table-wrap {
+      overflow: auto;
+      max-height: 62vh;
+      border: 1px solid rgba(181, 151, 109, 0.3);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+    table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; }
+    th, td {
+      border-right: 1px solid rgba(181, 151, 109, 0.3);
+      border-bottom: 1px solid rgba(181, 151, 109, 0.3);
+      vertical-align: top;
+      background: rgba(255, 251, 246, 0.9);
+    }
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 12px;
+      text-align: left;
+      background: var(--surface-2);
+      font-size: 0.92rem;
+    }
+    tbody tr:nth-child(odd) td { background: var(--row-a); }
+    tbody tr:nth-child(even) td { background: var(--row-b); }
+    th:last-child, td:last-child { border-right: 0; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .small { width: var(--small); min-width: var(--small); }
+    .medium { width: var(--medium); min-width: var(--medium); }
+    .large { width: var(--large); min-width: var(--large); }
+    .action { width: 92px; min-width: 92px; }
+    .sticky-company {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      box-shadow: 8px 0 18px rgba(46, 36, 25, 0.08);
+    }
+    thead .sticky-company { z-index: 6; background: #eadbc4; }
+    tbody tr:nth-child(odd) .sticky-company { background: #dceeff; }
+    tbody tr:nth-child(even) .sticky-company { background: #ffe6c8; }
+    .cell { padding: 8px; display: flex; flex-direction: column; gap: 7px; }
+    .link-button, .copy-button {
+      align-self: flex-start;
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .link-button { color: #fff; background: var(--accent-2); }
+    .copy-button { color: var(--accent-2); border: 1px solid rgba(20, 108, 99, 0.25); background: rgba(20, 108, 99, 0.08); }
+    .schedule-title h2 { font-size: 1.3rem; }
+    .schedule-title p { margin-top: 6px; color: var(--muted); }
+    .schedule-nav, .schedule-legend { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .month-label { min-width: 150px; text-align: center; font-weight: 700; color: var(--text); }
+    .schedule-legend { margin-bottom: 12px; }
+    .legend-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      background: rgba(255, 253, 249, 0.7);
+      border: 1px solid rgba(181, 151, 109, 0.25);
+    }
+    .legend-chip::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+    .weekday, .day-card {
+      border: 1px solid rgba(181, 151, 109, 0.26);
+      border-radius: 8px;
+      background: rgba(255, 252, 247, 0.92);
+    }
+    .weekday { padding: 9px; text-align: center; color: var(--muted); font-weight: 700; }
+    .day-card { min-height: 132px; padding: 9px; display: flex; flex-direction: column; gap: 7px; }
+    .day-card.is-outside { opacity: 0.45; }
+    .day-card.is-today { border-color: var(--accent); box-shadow: inset 0 0 0 1px rgba(20, 108, 99, 0.18); }
+    .day-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .add-event-button {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 50%;
+      color: var(--accent-2);
+      border-color: rgba(20, 108, 99, 0.24);
+      background: rgba(20, 108, 99, 0.08);
+    }
+    .day-events { display: flex; flex-direction: column; gap: 5px; }
+    .event-chip {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px;
+      border: 0;
+      border-radius: 8px;
+      padding: 5px 7px;
+      color: #fff;
+      text-align: left;
+      font-size: 0.82rem;
+      overflow: hidden;
+    }
+    .event-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .event-chip small { opacity: 0.9; font-size: 0.72rem; }
+    .event-chip.is-start { background: var(--start); }
+    .event-chip.is-deadline { background: var(--deadline); }
+    .event-chip.is-test { background: var(--test); }
+    .event-chip.is-first { background: var(--interview); }
+    .event-chip.is-second { background: #0f766e; }
+    .event-chip.is-other { background: #6c757d; }
+    .empty-note { color: #94897a; font-size: 0.78rem; padding-top: 4px; }
+    .modal.is-hidden, .is-hidden { display: none; }
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(43, 36, 28, 0.34);
+    }
+    .modal-card { width: min(100%, 560px); padding: 18px; }
+    .modal-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; margin-bottom: 14px; }
+    .icon-button { width: 36px; height: 36px; padding: 0; border-radius: 50%; color: var(--text); background: #fffdf9; border-color: var(--line); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .field.full { grid-column: 1 / -1; }
+    .modal-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 14px; }
+
+    @media (max-width: 920px) {
+      .app { padding: 18px; }
+      .hero, .schedule-head { flex-direction: column; align-items: stretch; }
+      .calendar-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .weekday { display: none; }
+      .form-grid { grid-template-columns: 1fr; }
+      .month-label { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Company Sheet Remake</p>
+        <h1>就活情報管理</h1>
+        <p>入力内容はこのブラウザに自動保存。開始日と締め切り日はカレンダーに自動反映されます。</p>
+      </div>
+      <div class="actions">
+        <button id="addRow" class="primary" type="button">企業を追加</button>
+        <button id="resetAll" class="secondary" type="button">全消去</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="meta">
+        <div class="search-box">
+          <label for="companySearch">企業名検索</label>
+          <input id="companySearch" type="text" placeholder="企業名で絞り込み">
+        </div>
+        <p id="status">保存済み</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr id="headRow"></tr></thead>
+          <tbody id="bodyRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="schedule-panel">
+      <div class="schedule-head">
+        <div class="schedule-title">
+          <h2>カレンダー</h2>
+          <p>企業ごとの開始・締め切りに加えて、予定を手動追加できます。</p>
+        </div>
+        <div class="schedule-nav">
+          <button id="prevMonth" class="secondary" type="button">前の月</button>
+          <div id="monthLabel" class="month-label"></div>
+          <button id="nextMonth" class="secondary" type="button">次の月</button>
+        </div>
+      </div>
+      <div id="scheduleLegend" class="schedule-legend"></div>
+      <div id="calendarGrid" class="calendar-grid"></div>
+    </section>
+  </main>
+
+  <div id="eventModal" class="modal is-hidden" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h3>予定を追加</h3>
+          <p id="modalDateLabel"></p>
+        </div>
+        <button id="closeModal" class="icon-button" type="button">&times;</button>
+      </div>
+      <form id="eventForm">
+        <div class="form-grid">
+          <label class="field">
+            <span class="field-label">日付</span>
+            <input id="eventDate" type="date" required>
+          </label>
+          <label class="field">
+            <span class="field-label">種別</span>
+            <select id="eventCategory" required></select>
+          </label>
+          <label class="field full">
+            <span class="field-label">予定名</span>
+            <input id="eventTitle" type="text" placeholder="例: 〇〇商事 説明会" required>
+          </label>
+          <label class="field full">
+            <span class="field-label">メモ</span>
+            <textarea id="eventNote" placeholder="詳細や持ち物など"></textarea>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button id="deleteEvent" class="danger is-hidden" type="button">削除</button>
+          <div class="actions">
+            <button id="cancelModal" class="secondary" type="button">キャンセル</button>
+            <button class="primary" type="submit">保存</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "job-hunt-company-sheet-remake-v1";
+    const SCHEDULE_STORAGE_KEY = "job-hunt-month-schedule-remake-v1";
+
+    const columns = [
+      { key: "companyName", label: "企業名", size: "small", sticky: true, type: "textarea" },
+      { key: "deadline", label: "締め切り", size: "small", type: "date" },
+      { key: "startDate", label: "開始", size: "small", type: "date" },
+      { key: "recruitPage", label: "採用ページ", size: "medium", type: "url" },
+      { key: "loginId", label: "ID", size: "small", type: "copy" },
+      { key: "aptitudeTest", label: "適正検査", size: "medium", type: "textarea" },
+      { key: "firstInterview", label: "1次", size: "medium", type: "textarea" },
+      { key: "secondInterview", label: "2次", size: "medium", type: "textarea" }
+    ];
+
+    const manualCategories = [
+      { value: "test", label: "適正検査", className: "is-test", color: "#6d597a" },
+      { value: "first", label: "1次", className: "is-first", color: "#2563eb" },
+      { value: "second", label: "2次", className: "is-second", color: "#0f766e" },
+      { value: "other", label: "その他", className: "is-other", color: "#6c757d" }
+    ];
+
+    const legendItems = [
+      { label: "開始", color: "#2f7d6d" },
+      { label: "締め切り", color: "#c2410c" },
+      ...manualCategories.map((item) => ({ label: item.label, color: item.color }))
+    ];
+
+    const headRow = document.getElementById("headRow");
+    const bodyRows = document.getElementById("bodyRows");
+    const addRowButton = document.getElementById("addRow");
+    const resetAllButton = document.getElementById("resetAll");
+    const statusNode = document.getElementById("status");
+    const companySearchInput = document.getElementById("companySearch");
+    const calendarGrid = document.getElementById("calendarGrid");
+    const monthLabel = document.getElementById("monthLabel");
+    const prevMonthButton = document.getElementById("prevMonth");
+    const nextMonthButton = document.getElementById("nextMonth");
+    const scheduleLegend = document.getElementById("scheduleLegend");
+    const eventModal = document.getElementById("eventModal");
+    const eventForm = document.getElementById("eventForm");
+    const eventDateInput = document.getElementById("eventDate");
+    const eventCategorySelect = document.getElementById("eventCategory");
+    const eventTitleInput = document.getElementById("eventTitle");
+    const eventNoteInput = document.getElementById("eventNote");
+    const modalDateLabel = document.getElementById("modalDateLabel");
+    const closeModalButton = document.getElementById("closeModal");
+    const cancelModalButton = document.getElementById("cancelModal");
+    const deleteEventButton = document.getElementById("deleteEvent");
+
+    let rows = loadRows();
+    let schedules = loadSchedules();
+    let companySearchQuery = "";
+    let currentMonth = new Date();
+    currentMonth.setDate(1);
+    let editingEventId = null;
+
+    renderLegend();
+    render();
+    renderCalendar();
+
+    addRowButton.addEventListener("click", () => {
+      rows.push(emptyRow());
+      render();
+      saveRows();
+    });
+
+    resetAllButton.addEventListener("click", () => {
+      if (!window.confirm("入力済みの企業情報をすべて削除します。よろしいですか？")) {
+        return;
+      }
+      rows = [emptyRow()];
+      render();
+      renderCalendar();
+      saveRows();
+    });
+
+    companySearchInput.addEventListener("input", (event) => {
+      companySearchQuery = event.target.value.trim().toLowerCase();
+      render();
+    });
+
+    prevMonthButton.addEventListener("click", () => {
+      currentMonth.setMonth(currentMonth.getMonth() - 1);
+      renderCalendar();
+    });
+
+    nextMonthButton.addEventListener("click", () => {
+      currentMonth.setMonth(currentMonth.getMonth() + 1);
+      renderCalendar();
+    });
+
+    closeModalButton.addEventListener("click", closeModal);
+    cancelModalButton.addEventListener("click", closeModal);
+    eventModal.addEventListener("click", (event) => {
+      if (event.target === eventModal) {
+        closeModal();
+      }
+    });
+
+    eventForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const item = {
+        id: editingEventId || String(Date.now()),
+        date: eventDateInput.value,
+        category: eventCategorySelect.value,
+        title: eventTitleInput.value.trim(),
+        note: eventNoteInput.value.trim()
+      };
+      if (!item.date || !item.title) {
+        return;
+      }
+      if (editingEventId) {
+        schedules = schedules.map((schedule) => schedule.id === editingEventId ? item : schedule);
+      } else {
+        schedules.push(item);
+      }
+      saveSchedules();
+      closeModal();
+      renderCalendar();
+    });
+
+    deleteEventButton.addEventListener("click", () => {
+      if (!editingEventId) {
+        return;
+      }
+      schedules = schedules.filter((schedule) => schedule.id !== editingEventId);
+      saveSchedules();
+      closeModal();
+      renderCalendar();
+    });
+
+    function render() {
+      renderHead();
+      bodyRows.innerHTML = "";
+      rows.forEach((row, rowIndex) => {
+        const companyName = String(row.companyName || "").toLowerCase();
+        if (companySearchQuery && !companyName.includes(companySearchQuery)) {
+          return;
+        }
+        const tr = document.createElement("tr");
+        tr.id = "company-row-" + rowIndex;
+        columns.forEach((column) => {
+          const td = document.createElement("td");
+          td.className = column.size + (column.sticky ? " sticky-company" : "");
+          td.appendChild(createCell(row, rowIndex, column));
+          tr.appendChild(td);
+        });
+
+        const actionTd = document.createElement("td");
+        actionTd.className = "action";
+        const actionWrap = document.createElement("div");
+        actionWrap.className = "cell";
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "danger";
+        removeButton.textContent = "削除";
+        removeButton.addEventListener("click", () => {
+          rows.splice(rowIndex, 1);
+          if (rows.length === 0) {
+            rows = [emptyRow()];
+          }
+          render();
+          renderCalendar();
+          saveRows();
+        });
+        actionWrap.appendChild(removeButton);
+        actionTd.appendChild(actionWrap);
+        tr.appendChild(actionTd);
+        bodyRows.appendChild(tr);
+      });
+    }
+
+    function renderHead() {
+      headRow.innerHTML = "";
+      columns.forEach((column) => {
+        const th = document.createElement("th");
+        th.className = column.size + (column.sticky ? " sticky-company" : "");
+        th.textContent = column.label;
+        headRow.appendChild(th);
+      });
+      const actionTh = document.createElement("th");
+      actionTh.className = "action";
+      actionTh.textContent = "削除";
+      headRow.appendChild(actionTh);
+    }
+
+    function createCell(row, rowIndex, column) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      const input = column.type === "textarea" || column.type === "url" || column.type === "copy"
+        ? document.createElement("textarea")
+        : document.createElement("input");
+
+      if (column.type === "date") {
+        input.type = "date";
+      }
+      input.value = row[column.key] || "";
+      input.setAttribute("aria-label", column.label + " " + (rowIndex + 1) + "行目");
+      if (input.tagName === "TEXTAREA") {
+        fit(input);
+      }
+
+      input.addEventListener("input", (event) => {
+        rows[rowIndex][column.key] = event.target.value;
+        if (event.target.tagName === "TEXTAREA") {
+          fit(event.target);
+        }
+        updateCellExtras(cell, row, column, event.target.value);
+        saveRows();
+        if (column.key === "deadline" || column.key === "startDate") {
+          renderCalendar();
+        }
+      });
+
+      cell.appendChild(input);
+      updateCellExtras(cell, row, column, input.value);
+      return cell;
+    }
+
+    function updateCellExtras(cell, row, column, rawValue) {
+      cell.querySelectorAll(".link-button, .copy-button").forEach((node) => node.remove());
+      const trimmed = String(rawValue || "").trim();
+      if (column.type === "url") {
+        const href = normalizeUrl(trimmed);
+        if (!href) {
+          return;
+        }
+        const link = document.createElement("a");
+        link.className = "link-button";
+        link.href = href;
+        link.target = "_blank";
+        link.rel = "noreferrer noopener";
+        link.textContent = "採用ページを開く";
+        cell.appendChild(link);
+        return;
+      }
+      if (column.type === "copy" && trimmed) {
+        const copyButton = document.createElement("button");
+        copyButton.type = "button";
+        copyButton.className = "copy-button";
+        copyButton.textContent = "IDをコピー";
+        copyButton.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(trimmed);
+            copyButton.textContent = "コピー済み";
+          } catch (error) {
+            copyButton.textContent = "コピー失敗";
+          }
+          setTimeout(() => {
+            copyButton.textContent = "IDをコピー";
+          }, 1200);
+        });
+        cell.appendChild(copyButton);
+      }
+    }
+
+    function renderLegend() {
+      scheduleLegend.innerHTML = "";
+      legendItems.forEach((item) => {
+        const chip = document.createElement("div");
+        chip.className = "legend-chip";
+        chip.textContent = item.label;
+        chip.style.color = item.color;
+        scheduleLegend.appendChild(chip);
+      });
+
+      eventCategorySelect.innerHTML = "";
+      manualCategories.forEach((category) => {
+        const option = document.createElement("option");
+        option.value = category.value;
+        option.textContent = category.label;
+        eventCategorySelect.appendChild(option);
+      });
+    }
+
+    function renderCalendar() {
+      calendarGrid.innerHTML = "";
+      monthLabel.textContent = currentMonth.getFullYear() + "年" + String(currentMonth.getMonth() + 1).padStart(2, "0") + "月";
+      ["日", "月", "火", "水", "木", "金", "土"].forEach((weekday) => {
+        const node = document.createElement("div");
+        node.className = "weekday";
+        node.textContent = weekday;
+        calendarGrid.appendChild(node);
+      });
+
+      const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      const startDate = new Date(firstDay);
+      startDate.setDate(firstDay.getDate() - firstDay.getDay());
+      const totalCells = needsSixthCalendarRow(startDate, currentMonth.getMonth()) ? 42 : 35;
+      const events = calendarEvents();
+
+      for (let index = 0; index < totalCells; index += 1) {
+        const cellDate = new Date(startDate);
+        cellDate.setDate(startDate.getDate() + index);
+        calendarGrid.appendChild(createDayCard(cellDate, events.filter((item) => item.date === formatDate(cellDate))));
+      }
+    }
+
+    function createDayCard(date, dayEvents) {
+      const card = document.createElement("div");
+      card.className = "day-card";
+      if (date.getMonth() !== currentMonth.getMonth()) {
+        card.classList.add("is-outside");
+      }
+      if (isSameDate(date, new Date())) {
+        card.classList.add("is-today");
+      }
+
+      const top = document.createElement("div");
+      top.className = "day-top";
+      const number = document.createElement("p");
+      number.className = "day-number";
+      number.textContent = String(date.getDate());
+      top.appendChild(number);
+      const plusButton = document.createElement("button");
+      plusButton.type = "button";
+      plusButton.className = "add-event-button";
+      plusButton.textContent = "+";
+      plusButton.addEventListener("click", () => openModal(formatDate(date)));
+      top.appendChild(plusButton);
+      card.appendChild(top);
+
+      const eventsWrap = document.createElement("div");
+      eventsWrap.className = "day-events";
+      if (dayEvents.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "empty-note";
+        empty.textContent = "予定なし";
+        eventsWrap.appendChild(empty);
+      } else {
+        dayEvents.forEach((eventItem) => {
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = "event-chip " + eventItem.className;
+          chip.title = eventItem.note || eventItem.title;
+          chip.innerHTML = "<span>" + escapeHtml(eventItem.title) + "</span><small>" + escapeHtml(eventItem.label) + "</small>";
+          chip.addEventListener("click", () => {
+            if (eventItem.source === "company") {
+              scrollToCompany(eventItem.rowIndex);
+            } else {
+              openModal(eventItem.date, eventItem.original);
+            }
+          });
+          eventsWrap.appendChild(chip);
+        });
+      }
+      card.appendChild(eventsWrap);
+      return card;
+    }
+
+    function calendarEvents() {
+      const companyEvents = [];
+      rows.forEach((row, rowIndex) => {
+        const company = row.companyName || "企業名未入力";
+        if (isDateValue(row.startDate)) {
+          companyEvents.push({
+            source: "company",
+            rowIndex,
+            date: row.startDate,
+            title: company,
+            label: "開始",
+            className: "is-start",
+            note: company + " 開始"
+          });
+        }
+        if (isDateValue(row.deadline)) {
+          companyEvents.push({
+            source: "company",
+            rowIndex,
+            date: row.deadline,
+            title: company,
+            label: "締め切り",
+            className: "is-deadline",
+            note: company + " 締め切り"
+          });
+        }
+      });
+
+      return [
+        ...companyEvents,
+        ...schedules.map((item) => ({
+          source: "manual",
+          original: item,
+          date: item.date,
+          title: item.title,
+          label: categoryMeta(item.category).label,
+          className: categoryMeta(item.category).className,
+          note: item.note
+        }))
+      ].sort((a, b) => a.label.localeCompare(b.label, "ja"));
+    }
+
+    function scrollToCompany(rowIndex) {
+      const row = document.getElementById("company-row-" + rowIndex);
+      if (row) {
+        row.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+      }
+    }
+
+    function openModal(dateValue, existingEvent) {
+      editingEventId = existingEvent ? existingEvent.id : null;
+      eventDateInput.value = dateValue;
+      eventCategorySelect.value = existingEvent ? existingEvent.category : manualCategories[0].value;
+      eventTitleInput.value = existingEvent ? existingEvent.title : "";
+      eventNoteInput.value = existingEvent ? existingEvent.note : "";
+      modalDateLabel.textContent = formatDateLabel(dateValue);
+      deleteEventButton.classList.toggle("is-hidden", !existingEvent);
+      eventModal.classList.remove("is-hidden");
+      eventModal.setAttribute("aria-hidden", "false");
+      eventTitleInput.focus();
+    }
+
+    function closeModal() {
+      editingEventId = null;
+      eventForm.reset();
+      eventCategorySelect.value = manualCategories[0].value;
+      eventModal.classList.add("is-hidden");
+      eventModal.setAttribute("aria-hidden", "true");
+    }
+
+    function categoryMeta(value) {
+      return manualCategories.find((item) => item.value === value) || manualCategories[manualCategories.length - 1];
+    }
+
+    function needsSixthCalendarRow(startDate, currentMonthIndex) {
+      const rowStart = new Date(startDate);
+      rowStart.setDate(startDate.getDate() + 35);
+      for (let offset = 0; offset < 7; offset += 1) {
+        const checkDate = new Date(rowStart);
+        checkDate.setDate(rowStart.getDate() + offset);
+        if (checkDate.getMonth() === currentMonthIndex) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function emptyRow() {
+      const row = {};
+      columns.forEach((column) => {
+        row[column.key] = "";
+      });
+      return row;
+    }
+
+    function saveRows() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+      updateStatus();
+    }
+
+    function saveSchedules() {
+      localStorage.setItem(SCHEDULE_STORAGE_KEY, JSON.stringify(schedules));
+      updateStatus();
+    }
+
+    function loadRows() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        if (Array.isArray(saved) && saved.length > 0) {
+          return saved.map((item) => ({ ...emptyRow(), ...item }));
+        }
+      } catch (error) {
+      }
+      return [emptyRow()];
+    }
+
+    function loadSchedules() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(SCHEDULE_STORAGE_KEY) || "[]");
+        if (Array.isArray(saved)) {
+          return saved.filter((item) => item && item.id && isDateValue(item.date) && item.category && item.title).map((item) => ({
+            id: String(item.id),
+            date: String(item.date),
+            category: String(item.category),
+            title: String(item.title),
+            note: item.note ? String(item.note) : ""
+          }));
+        }
+      } catch (error) {
+      }
+      return [];
+    }
+
+    function updateStatus() {
+      statusNode.textContent = "最終保存 " + new Date().toLocaleTimeString("ja-JP", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function normalizeUrl(value) {
+      const trimmed = String(value || "").trim();
+      if (!trimmed) {
+        return "";
+      }
+      try {
+        const full = /^https?:\/\//i.test(trimmed) ? trimmed : "https://" + trimmed;
+        return new URL(full).href;
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function fit(textarea) {
+      textarea.style.height = "0px";
+      textarea.style.height = Math.max(textarea.scrollHeight, 82) + "px";
+    }
+
+    function isDateValue(value) {
+      return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
+    }
+
+    function formatDate(date) {
+      return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0");
+    }
+
+    function formatDateLabel(value) {
+      const [year, month, day] = value.split("-");
+      return year + "年" + month + "月" + day + "日";
+    }
+
+    function isSameDate(left, right) {
+      return left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth() && left.getDate() === right.getDate();
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+  </script>
+</body>
+</html>
