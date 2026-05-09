@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>企業情報記録</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">就活データベース</p>
+        <h1>企業情報記録</h1>
+      </div>
+      <div class="header-actions">
+        <button class="secondary-button" id="exportButton" type="button">バックアップ</button>
+        <button class="primary-button" id="addCompanyButton" type="button">企業を追加</button>
+      </div>
+    </header>
+
+    <section class="workspace" aria-label="企業情報入力">
+      <aside class="company-list-panel">
+        <div class="panel-heading">
+          <h2>企業一覧</h2>
+          <span id="companyCount">0社</span>
+        </div>
+        <div class="company-list" id="companyList"></div>
+      </aside>
+
+      <section class="editor-panel">
+        <div class="editor-top">
+          <div>
+            <p class="eyebrow">編集中</p>
+            <h2 id="editorTitle">企業A</h2>
+          </div>
+          <button class="danger-button" id="deleteCompanyButton" type="button">削除</button>
+        </div>
+        <form class="company-form" id="companyForm"></form>
+      </section>
+    </section>
+  </main>
+
+  <template id="companyButtonTemplate">
+    <button class="company-button" type="button">
+      <span class="company-name"></span>
+      <span class="company-industry"></span>
+    </button>
+  </template>
+
+  <template id="fieldTemplate">
+    <label class="field">
+      <span class="field-label"></span>
+      <textarea rows="3"></textarea>
+    </label>
+  </template>
+
+  <template id="shortFieldTemplate">
+    <label class="field">
+      <span class="field-label"></span>
+      <input type="text">
+    </label>
+  </template>
+
+  <script src="./app.js"></script>
+</body>
+</html>
