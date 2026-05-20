@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ES Tracker PC</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --panel-soft: #f8fafb;
+      --line: #d7dee6;
+      --line-strong: #b8c4cf;
+      --text: #20262d;
+      --muted: #66727e;
+      --accent: #155e57;
+      --accent-dark: #0f4641;
+      --blue: #1d5fd7;
+      --blue-soft: #e1ecff;
+      --green: #168449;
+      --green-soft: #def5e8;
+      --red: #c92828;
+      --red-soft: #fde2e2;
+      --shadow: 0 10px 26px rgba(30, 43, 56, 0.08);
+      --focus: 0 0 0 3px rgba(21, 94, 87, 0.16);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--bg);
+      font-family: "Yu Gothic UI", "Meiryo", "Hiragino Sans", system-ui, sans-serif;
+      line-height: 1.55;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text);
+      background: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: var(--line-strong);
+      background: var(--panel-soft);
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: var(--focus);
+    }
+
+    .primary {
+      color: #fff;
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    .primary:hover {
+      border-color: var(--accent-dark);
+      background: var(--accent-dark);
+    }
+
+    .danger {
+      color: var(--red);
+      border-color: rgba(201, 40, 40, 0.28);
+      background: var(--red-soft);
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 10px;
+      color: var(--text);
+      background: #fff;
+    }
+
+    textarea {
+      resize: vertical;
+      line-height: 1.75;
+    }
+
+    h1,
+    h2,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 4px;
+      font-size: 1.35rem;
+      line-height: 1.25;
+    }
+
+    h2 {
+      margin-bottom: 8px;
+      font-size: 1.06rem;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 360px minmax(620px, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      min-height: 100vh;
+      border-right: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .brand,
+    .toolbar {
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfd;
+    }
+
+    .status-line,
+    .muted {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .status-line {
+      margin-bottom: 0;
+    }
+
+    .toolbar {
+      display: grid;
+      gap: 10px;
+      background: var(--panel);
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 128px;
+      gap: 8px;
+    }
+
+    .entry-list {
+      height: calc(100vh - 221px);
+      overflow: auto;
+      padding: 10px;
+    }
+
+    .entry-item {
+      width: 100%;
+      min-height: 0;
+      margin-bottom: 8px;
+      border-color: transparent;
+      padding: 10px;
+      text-align: left;
+      background: transparent;
+    }
+
+    .entry-item:hover {
+      background: #f1f4f6;
+    }
+
+    .entry-item.active {
+      border-color: rgba(21, 94, 87, 0.32);
+      background: #e4f0ee;
+    }
+
+    .entry-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .entry-title {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 800;
+    }
+
+    .entry-sub {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .badge.complete {
+      color: var(--blue);
+      background: var(--blue-soft);
+    }
+
+    .badge.incomplete {
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .badge.urgent {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .main {
+      min-width: 0;
+      padding: 18px 22px;
+    }
+
+    .editor-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .editor-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfd;
+    }
+
+    .editor-actions {
+      display: grid;
+      grid-template-columns: repeat(3, max-content);
+      gap: 8px;
+    }
+
+    .editor {
+      display: grid;
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 160px 170px;
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 800;
+    }
+
+    .question {
+      min-height: 112px;
+    }
+
+    .answer-wrap {
+      position: relative;
+    }
+
+    .answer {
+      min-height: 430px;
+      padding-bottom: 34px;
+      font-size: 1rem;
+    }
+
+    .counter {
+      position: absolute;
+      right: 10px;
+      bottom: 9px;
+      border-radius: 999px;
+      padding: 2px 9px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.92);
+      font-size: 0.78rem;
+      font-weight: 800;
+      pointer-events: none;
+    }
+
+    .empty {
+      padding: 22px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    @media (max-width: 920px) {
+      .app {
+        display: block;
+      }
+
+      .sidebar {
+        min-height: 0;
+      }
+
+      .entry-list {
+        height: 260px;
+      }
+
+      .main {
+        padding: 12px;
+      }
+
+      .editor-head,
+      .meta-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .editor-actions,
+      .filters {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <header class="brand">
+        <h1>ES Tracker PC</h1>
+        <p id="saveStatus" class="status-line">保存済み</p>
+      </header>
+
+      <section class="toolbar">
+        <div class="button-row">
+          <button id="addEntry" class="primary" type="button">新規</button>
+          <button id="duplicateEntry" type="button">複製</button>
+        </div>
+        <div class="filters">
+          <input id="searchInput" type="search" placeholder="会社・設問・回答で検索">
+          <select id="statusFilter" aria-label="状態で絞り込み">
+            <option value="all">すべて</option>
+            <option value="complete">完成</option>
+            <option value="incomplete">未完成</option>
+            <option value="urgent">急遽対応</option>
+          </select>
+        </div>
+      </section>
+
+      <nav id="entryList" class="entry-list" aria-label="ES一覧"></nav>
+    </aside>
+
+    <main class="main">
+      <section class="editor-card">
+        <header class="editor-head">
+          <div>
+            <h2 id="editorTitle">ES編集</h2>
+            <p id="editorMeta" class="muted">会社、状態、期限、設問、回答を管理します</p>
+          </div>
+          <div class="editor-actions">
+            <button id="exportData" type="button">書き出し</button>
+            <button id="importData" type="button">読み込み</button>
+            <button id="deleteEntry" class="danger" type="button">削除</button>
+          </div>
+          <input id="importFile" class="file-input" type="file" accept="application/json">
+        </header>
+
+        <form id="editor" class="editor" autocomplete="off">
+          <div class="meta-grid">
+            <label>会社
+              <input id="company" type="text" placeholder="例: 株式会社〇〇">
+            </label>
+            <label>状態
+              <select id="entryStatus">
+                <option value="complete">完成</option>
+                <option value="incomplete">未完成</option>
+                <option value="urgent">急遽対応</option>
+              </select>
+            </label>
+            <label>期限
+              <input id="deadline" type="date">
+            </label>
+          </div>
+
+          <label>設問
+            <textarea id="question" class="question" placeholder="ESの設問を入力"></textarea>
+          </label>
+
+          <label>回答
+            <div class="answer-wrap">
+              <textarea id="answer" class="answer" placeholder="回答本文を入力"></textarea>
+              <div id="answerCount" class="counter">0字</div>
+            </div>
+          </label>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "es-tracker-pc-v2";
+    const entryList = document.getElementById("entryList");
+    const saveStatus = document.getElementById("saveStatus");
+    const fields = {
+      company: document.getElementById("company"),
+      status: document.getElementById("entryStatus"),
+      deadline: document.getElementById("deadline"),
+      question: document.getElementById("question"),
+      answer: document.getElementById("answer")
+    };
+
+    let entries = loadEntries();
+    let selectedId = entries[0]?.id || null;
+    let searchText = "";
+    let filterStatus = "all";
+
+    document.getElementById("addEntry").addEventListener("click", () => {
+      const entry = createEntry();
+      entries.unshift(entry);
+      selectedId = entry.id;
+      saveEntries();
+      render();
+    });
+
+    document.getElementById("duplicateEntry").addEventListener("click", () => {
+      const current = getSelectedEntry();
+      if (!current) return;
+      const copy = {
+        ...current,
+        id: createId(),
+        company: current.company ? current.company + " コピー" : "",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      entries.unshift(copy);
+      selectedId = copy.id;
+      saveEntries();
+      render();
+    });
+
+    document.getElementById("deleteEntry").addEventListener("click", () => {
+      const current = getSelectedEntry();
+      if (!current) return;
+      if (!confirm("選択中のESを削除します。よろしいですか？")) return;
+      entries = entries.filter((entry) => entry.id !== current.id);
+      if (!entries.length) entries = [createEntry()];
+      selectedId = entries[0].id;
+      saveEntries();
+      render();
+    });
+
+    document.getElementById("searchInput").addEventListener("input", (event) => {
+      searchText = event.target.value.trim().toLowerCase();
+      renderList();
+    });
+
+    document.getElementById("statusFilter").addEventListener("change", (event) => {
+      filterStatus = event.target.value;
+      renderList();
+    });
+
+    document.getElementById("exportData").addEventListener("click", exportEntries);
+    document.getElementById("importData").addEventListener("click", () => document.getElementById("importFile").click());
+    document.getElementById("importFile").addEventListener("change", importEntries);
+
+    Object.entries(fields).forEach(([key, node]) => {
+      node.addEventListener("input", () => updateSelected(key, node.value));
+      node.addEventListener("change", () => updateSelected(key, node.value));
+    });
+
+    render();
+
+    function render() {
+      renderList();
+      renderEditor();
+    }
+
+    function renderList() {
+      entryList.innerHTML = "";
+      const filtered = entries.filter((entry) => {
+        const target = [entry.company, entry.question, entry.answer].join(" ").toLowerCase();
+        const display = displayStatus(entry);
+        const statusMatch = filterStatus === "all" || display.key === filterStatus || entry.status === filterStatus;
+        return statusMatch && (!searchText || target.includes(searchText));
+      });
+
+      if (!filtered.length) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = "該当するESがありません";
+        entryList.appendChild(empty);
+        return;
+      }
+
+      filtered.forEach((entry) => {
+        const display = displayStatus(entry);
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "entry-item" + (entry.id === selectedId ? " active" : "");
+        item.innerHTML = `
+          <span class="entry-main">
+            <span class="entry-title">${escapeHtml(entry.company || entry.question || "未入力")}</span>
+            <span class="badge ${display.key}">${escapeHtml(display.label)}</span>
+          </span>
+          <span class="entry-sub">
+            <span>期限 ${escapeHtml(formatDeadline(entry.deadline))}</span>
+            <span>${countChars(entry.answer)}字</span>
+          </span>
+        `;
+        item.addEventListener("click", () => {
+          selectedId = entry.id;
+          render();
+        });
+        entryList.appendChild(item);
+      });
+    }
+
+    function renderEditor() {
+      const entry = getSelectedEntry();
+      const disabled = !entry;
+      Object.values(fields).forEach((node) => node.disabled = disabled);
+      document.getElementById("deleteEntry").disabled = disabled;
+      document.getElementById("duplicateEntry").disabled = disabled;
+
+      if (!entry) {
+        document.getElementById("editorTitle").textContent = "ES編集";
+        document.getElementById("editorMeta").textContent = "左の一覧から選択してください";
+        return;
+      }
+
+      fields.company.value = entry.company || "";
+      fields.status.value = entry.status || "incomplete";
+      fields.deadline.value = entry.deadline || "";
+      fields.question.value = entry.question || "";
+      fields.answer.value = entry.answer || "";
+
+      const display = displayStatus(entry);
+      document.getElementById("editorTitle").textContent = entry.company || "ES編集";
+      document.getElementById("editorMeta").textContent = `${display.label} / 期限 ${formatDeadline(entry.deadline)} / 更新 ${formatTime(entry.updatedAt)}`;
+      document.getElementById("answerCount").textContent = countChars(entry.answer) + "字";
+    }
+
+    function updateSelected(key, value) {
+      const entry = getSelectedEntry();
+      if (!entry) return;
+      entry[key] = value;
+      entry.updatedAt = new Date().toISOString();
+      saveEntries();
+      renderList();
+
+      const display = displayStatus(entry);
+      document.getElementById("editorTitle").textContent = entry.company || "ES編集";
+      document.getElementById("editorMeta").textContent = `${display.label} / 期限 ${formatDeadline(entry.deadline)} / 更新 ${formatTime(entry.updatedAt)}`;
+      document.getElementById("answerCount").textContent = countChars(entry.answer) + "字";
+    }
+
+    function displayStatus(entry) {
+      if (entry.status === "complete") return { key: "complete", label: "完成" };
+      if (entry.status === "urgent" || isWithinOneWeek(entry.deadline)) return { key: "urgent", label: "急遽対応" };
+      return { key: "incomplete", label: "未完成" };
+    }
+
+    function isWithinOneWeek(deadline) {
+      if (!deadline) return false;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const due = new Date(deadline + "T00:00:00");
+      const diffDays = Math.ceil((due - today) / 86400000);
+      return diffDays >= 0 && diffDays <= 7;
+    }
+
+    function exportEntries() {
+      const blob = new Blob([JSON.stringify(entries, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "es-tracker-pc-data.json";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importEntries(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(String(reader.result));
+          if (!Array.isArray(data)) throw new Error("invalid");
+          const imported = data.map(normalizeEntry);
+          entries = imported.length ? imported : entries;
+          selectedId = entries[0].id;
+          saveEntries();
+          render();
+        } catch (error) {
+          alert("読み込めないJSONです。");
+        } finally {
+          event.target.value = "";
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function getSelectedEntry() {
+      return entries.find((entry) => entry.id === selectedId) || entries[0] || null;
+    }
+
+    function createEntry() {
+      return {
+        id: createId(),
+        company: "",
+        status: "incomplete",
+        deadline: "",
+        question: "",
+        answer: "",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    function createId() {
+      return "es-" + Date.now() + "-" + Math.random().toString(16).slice(2, 8);
+    }
+
+    function loadEntries() {
+      try {
+        const savedV2 = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        if (Array.isArray(savedV2) && savedV2.length) return savedV2.map(normalizeEntry);
+
+        const savedV1 = JSON.parse(localStorage.getItem("es-tracker-pc-v1") || "[]");
+        if (Array.isArray(savedV1) && savedV1.length) return savedV1.map(normalizeEntry);
+      } catch (error) {
+      }
+      return [createEntry()];
+    }
+
+    function normalizeEntry(item) {
+      const normalizedStatus = normalizeStatus(item.status);
+      return {
+        id: String(item.id || createId()),
+        company: String(item.company || ""),
+        status: normalizedStatus,
+        deadline: String(item.deadline || ""),
+        question: String(item.question || ""),
+        answer: String(item.answer || ""),
+        createdAt: String(item.createdAt || new Date().toISOString()),
+        updatedAt: String(item.updatedAt || new Date().toISOString())
+      };
+    }
+
+    function normalizeStatus(value) {
+      if (value === "complete" || value === "submitted") return "complete";
+      if (value === "urgent") return "urgent";
+      return "incomplete";
+    }
+
+    function saveEntries() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+      saveStatus.textContent = "保存済み: " + new Date().toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function countChars(value) {
+      return String(value || "").replace(/\r\n/g, "\n").length;
+    }
+
+    function formatDeadline(value) {
+      if (!value) return "未設定";
+      return new Date(value + "T00:00:00").toLocaleDateString("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      });
+    }
+
+    function formatTime(value) {
+      if (!value) return "-";
+      return new Date(value).toLocaleString("ja-JP", {
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+  </script>
+</body>
+</html>
