@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPIランダム演習</title>
+  <style>
+    :root {
+      --bg: #eef4f7;
+      --surface: #fbfdff;
+      --surface-2: #e3eef4;
+      --line: #bfd0da;
+      --text: #172733;
+      --muted: #617585;
+      --accent: #0f6f8f;
+      --accent-2: #0b526c;
+      --danger: #b43b4f;
+      --ok: #16805f;
+      --warn: #9b6b00;
+      --shadow: 0 18px 38px rgba(31, 52, 65, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      color: var(--text);
+      background:
+        radial-gradient(circle at 8% 0%, rgba(15, 111, 143, 0.16), transparent 30%),
+        radial-gradient(circle at 96% 4%, rgba(22, 128, 95, 0.12), transparent 24%),
+        linear-gradient(180deg, #f8fbfd 0%, var(--bg) 100%);
+      font-family: "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
+    }
+
+    button, input, textarea { font: inherit; }
+    button {
+      cursor: pointer;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      background: #fff;
+      font-weight: 700;
+    }
+    button:hover { border-color: var(--accent); }
+    button:disabled { cursor: not-allowed; opacity: 0.55; }
+    .primary { color: #fff; background: var(--accent); border-color: var(--accent); }
+    .ghost { color: var(--accent-2); background: rgba(15, 111, 143, 0.08); border-color: rgba(15, 111, 143, 0.2); }
+    .danger { color: var(--danger); background: rgba(180, 59, 79, 0.08); border-color: rgba(180, 59, 79, 0.2); }
+    .ok { color: #fff; background: var(--ok); border-color: var(--ok); }
+    .miss { color: #fff; background: var(--danger); border-color: var(--danger); }
+
+    .app { max-width: 1180px; margin: 0 auto; padding: 24px; }
+    .topbar,
+    .panel,
+    .question-shell,
+    .result-shell {
+      border: 1px solid rgba(191, 208, 218, 0.86);
+      border-radius: 8px;
+      background: rgba(251, 253, 255, 0.95);
+      box-shadow: var(--shadow);
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: end;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .eyebrow {
+      margin: 0 0 6px;
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    h1, h2, p { margin-top: 0; }
+    h1 { margin-bottom: 0; font-size: clamp(1.5rem, 2vw + 1rem, 2.4rem); }
+    h2 { margin-bottom: 10px; font-size: 1.2rem; }
+    .muted { color: var(--muted); }
+    .view { display: none; }
+    .view.is-active { display: block; }
+
+    .setup-grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr);
+      gap: 16px;
+    }
+    .panel { padding: 18px; }
+    .field { display: grid; gap: 8px; margin-bottom: 14px; }
+    .field span { color: var(--muted); font-weight: 700; }
+    input[type="number"] {
+      width: 160px;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      background: #fff;
+    }
+    .mode-actions,
+    .button-row,
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .stats-row { margin-top: 14px; }
+    .stat {
+      min-width: 118px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #f6fafc;
+    }
+    .stat span { display: block; color: var(--muted); font-size: 0.78rem; font-weight: 800; }
+    .stat strong { font-size: 1.25rem; }
+
+    .question-shell { padding: 16px; }
+    .exam-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .progress-line {
+      height: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--surface-2);
+    }
+    .progress-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #16a0bf, #0f6f8f);
+      transition: width 200ms linear;
+    }
+    .timer {
+      min-width: 88px;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #fff;
+      background: var(--accent-2);
+      text-align: center;
+      font-weight: 900;
+      font-size: 1.35rem;
+    }
+    .question-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .question-image-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      text-align: center;
+    }
+    .question-image {
+      display: block;
+      width: min(100%, 1045px);
+      height: auto;
+      margin: 0 auto;
+    }
+    .answer-area {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 92px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      resize: vertical;
+      background: #fff;
+      line-height: 1.6;
+    }
+    textarea:focus,
+    input:focus {
+      outline: 2px solid rgba(15, 111, 143, 0.18);
+      border-color: var(--accent);
+    }
+    .exam-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .result-shell { padding: 18px; }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+    th, td {
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      padding: 10px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: var(--surface-2); }
+    th:last-child, td:last-child { border-right: 0; }
+    tr:last-child td { border-bottom: 0; }
+    .answer-cell { white-space: pre-wrap; min-width: 240px; }
+    .grade-actions { display: flex; gap: 8px; }
+    .grade-mark {
+      min-width: 3em;
+      font-weight: 900;
+    }
+    .mark-ok { color: var(--ok); }
+    .mark-miss { color: var(--danger); }
+
+    @media (max-width: 760px) {
+      .app { padding: 14px; }
+      .topbar,
+      .exam-head,
+      .setup-grid {
+        grid-template-columns: 1fr;
+      }
+      .topbar { align-items: stretch; }
+      .timer { width: 100%; }
+      .exam-actions { flex-direction: column; }
+      .exam-actions button { width: 100%; }
+      table { min-width: 620px; }
+      .result-scroll { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">SPI Test Center Practice</p>
+        <h1>ランダム演習</h1>
+      </div>
+      <div class="stats-row" id="globalStats"></div>
+    </header>
+
+    <section id="setupView" class="view is-active">
+      <div class="setup-grid">
+        <section class="panel">
+          <h2>出題設定</h2>
+          <label class="field">
+            <span>出題問題数</span>
+            <input id="questionCount" type="number" min="1" max="197" value="20">
+          </label>
+          <div class="mode-actions">
+            <button id="startAll" class="primary" type="button">全問ランダム</button>
+            <button id="startWeak" class="ghost" type="button">苦手問題</button>
+          </div>
+          <p id="setupNote" class="muted"></p>
+        </section>
+
+        <section class="panel">
+          <h2>記録</h2>
+          <p class="muted">採点で〇にした問題は全問ランダムから外します。✕にした問題は苦手問題として保存します。</p>
+          <div class="stats-row" id="recordStats"></div>
+          <div class="button-row" style="margin-top:14px;">
+            <button id="resetSession" type="button">前回結果を消す</button>
+            <button id="resetGrades" class="danger" type="button">採点記録を全消去</button>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section id="examView" class="view">
+      <section class="question-shell">
+        <div class="exam-head">
+          <div>
+            <div class="question-meta">
+              <span id="questionProgress"></span>
+              <span id="questionNumber"></span>
+              <span id="modeLabel"></span>
+            </div>
+            <div class="progress-line"><div id="timeFill" class="progress-fill"></div></div>
+          </div>
+          <div id="timer" class="timer">30</div>
+        </div>
+        <div class="question-image-wrap">
+          <img id="questionImage" class="question-image" alt="問題">
+        </div>
+        <label class="answer-area">
+          <span class="muted">解答</span>
+          <textarea id="answerInput" placeholder="ここに解答を入力"></textarea>
+        </label>
+        <div class="exam-actions">
+          <button id="finishNow" class="danger" type="button">終了して採点へ</button>
+          <button id="nextQuestion" class="primary" type="button">次へ</button>
+        </div>
+      </section>
+    </section>
+
+    <section id="resultView" class="view">
+      <section class="result-shell">
+        <div class="exam-head">
+          <div>
+            <h2>採点</h2>
+            <p class="muted">問題番号順です。〇/✕を押すと次回以降の出題記録に反映されます。</p>
+          </div>
+          <div class="button-row">
+            <button id="backSetup" type="button">スタート画面へ</button>
+          </div>
+        </div>
+        <div class="result-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>問題番号</th>
+                <th>入力した解答</th>
+                <th>判定</th>
+                <th>採点</th>
+              </tr>
+            </thead>
+            <tbody id="resultRows"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const TOTAL_QUESTIONS = 197;
+    const QUESTION_SECONDS = 30;
+    const STORE_KEY = "spi-random-practice-state-v1";
+    const questions = Array.from({ length: TOTAL_QUESTIONS }, (_, index) => {
+      const number = index + 1;
+      return {
+        number,
+        src: `問題集/q_${String(number).padStart(3, "0")}.jpg`
+      };
+    });
+
+    const state = loadState();
+    const session = {
+      mode: "all",
+      queue: [],
+      index: 0,
+      answers: [],
+      startedAt: null,
+      remaining: QUESTION_SECONDS,
+      timerId: null,
+      tickStartedAt: 0
+    };
+
+    const views = {
+      setup: document.getElementById("setupView"),
+      exam: document.getElementById("examView"),
+      result: document.getElementById("resultView")
+    };
+    const nodes = {
+      globalStats: document.getElementById("globalStats"),
+      recordStats: document.getElementById("recordStats"),
+      setupNote: document.getElementById("setupNote"),
+      questionCount: document.getElementById("questionCount"),
+      startAll: document.getElementById("startAll"),
+      startWeak: document.getElementById("startWeak"),
+      resetSession: document.getElementById("resetSession"),
+      resetGrades: document.getElementById("resetGrades"),
+      questionProgress: document.getElementById("questionProgress"),
+      questionNumber: document.getElementById("questionNumber"),
+      modeLabel: document.getElementById("modeLabel"),
+      timer: document.getElementById("timer"),
+      timeFill: document.getElementById("timeFill"),
+      questionImage: document.getElementById("questionImage"),
+      answerInput: document.getElementById("answerInput"),
+      nextQuestion: document.getElementById("nextQuestion"),
+      finishNow: document.getElementById("finishNow"),
+      resultRows: document.getElementById("resultRows"),
+      backSetup: document.getElementById("backSetup")
+    };
+
+    nodes.startAll.addEventListener("click", () => startExam("all"));
+    nodes.startWeak.addEventListener("click", () => startExam("weak"));
+    nodes.nextQuestion.addEventListener("click", () => goNext());
+    nodes.finishNow.addEventListener("click", () => finishExam());
+    nodes.backSetup.addEventListener("click", () => showSetup());
+    nodes.resetSession.addEventListener("click", () => {
+      state.lastAnswers = [];
+      saveState();
+      renderStats();
+    });
+    nodes.resetGrades.addEventListener("click", () => {
+      if (!confirm("〇/✕の採点記録をすべて削除します。よろしいですか？")) return;
+      state.correct = [];
+      state.weak = [];
+      state.lastAnswers = [];
+      saveState();
+      renderStats();
+    });
+
+    renderStats();
+
+    function startExam(mode) {
+      const requested = clampCount(nodes.questionCount.value);
+      const pool = buildPool(mode);
+      if (!pool.length) {
+        nodes.setupNote.textContent = mode === "weak"
+          ? "苦手問題がまだありません。採点で✕を付けると追加されます。"
+          : "未正解の問題がありません。採点記録を全消去すると再開できます。";
+        return;
+      }
+
+      session.mode = mode;
+      session.queue = shuffle(pool).slice(0, Math.min(requested, pool.length));
+      session.index = 0;
+      session.answers = [];
+      session.startedAt = new Date().toISOString();
+      state.lastAnswers = [];
+      saveState();
+      showView("exam");
+      renderQuestion();
+    }
+
+    function buildPool(mode) {
+      if (mode === "weak") {
+        return questions.filter((item) => state.weak.includes(item.number));
+      }
+      return questions.filter((item) => !state.correct.includes(item.number));
+    }
+
+    function renderQuestion() {
+      clearTimer();
+      const current = session.queue[session.index];
+      if (!current) {
+        finishExam();
+        return;
+      }
+
+      nodes.questionProgress.textContent = `${session.index + 1} / ${session.queue.length}`;
+      nodes.questionNumber.textContent = `問題 ${current.number}`;
+      nodes.modeLabel.textContent = session.mode === "weak" ? "苦手問題" : "全問ランダム";
+      nodes.questionImage.src = current.src;
+      nodes.questionImage.alt = `問題 ${current.number}`;
+      nodes.answerInput.value = "";
+      nodes.answerInput.focus();
+      startTimer();
+      renderStats();
+    }
+
+    function startTimer() {
+      session.remaining = QUESTION_SECONDS;
+      session.tickStartedAt = Date.now();
+      updateTimerDisplay();
+      session.timerId = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - session.tickStartedAt) / 1000);
+        session.remaining = Math.max(0, QUESTION_SECONDS - elapsed);
+        updateTimerDisplay();
+        if (session.remaining <= 0) {
+          goNext();
+        }
+      }, 250);
+    }
+
+    function clearTimer() {
+      if (session.timerId) {
+        clearInterval(session.timerId);
+        session.timerId = null;
+      }
+    }
+
+    function updateTimerDisplay() {
+      nodes.timer.textContent = String(session.remaining);
+      nodes.timeFill.style.width = `${(session.remaining / QUESTION_SECONDS) * 100}%`;
+      nodes.timer.style.background = session.remaining <= 5 ? "var(--danger)" : "var(--accent-2)";
+    }
+
+    function goNext() {
+      const current = session.queue[session.index];
+      if (!current) return;
+      clearTimer();
+      session.answers.push({
+        number: current.number,
+        answer: nodes.answerInput.value.trim(),
+        answeredAt: new Date().toISOString()
+      });
+      session.index += 1;
+      if (session.index >= session.queue.length) {
+        finishExam();
+      } else {
+        renderQuestion();
+      }
+    }
+
+    function finishExam() {
+      clearTimer();
+      if (views.exam.classList.contains("is-active")) {
+        const current = session.queue[session.index];
+        const alreadySaved = session.answers.some((item) => item.number === current?.number);
+        if (current && !alreadySaved) {
+          session.answers.push({
+            number: current.number,
+            answer: nodes.answerInput.value.trim(),
+            answeredAt: new Date().toISOString()
+          });
+        }
+      }
+      state.lastAnswers = mergeLatestAnswers(session.answers).sort((a, b) => a.number - b.number);
+      saveState();
+      renderResults();
+      showView("result");
+      renderStats();
+    }
+
+    function renderResults() {
+      const rows = state.lastAnswers.slice().sort((a, b) => a.number - b.number);
+      nodes.resultRows.innerHTML = "";
+      rows.forEach((item) => {
+        const tr = document.createElement("tr");
+        const grade = gradeFor(item.number);
+        tr.innerHTML = `
+          <td>${item.number}</td>
+          <td class="answer-cell"></td>
+          <td class="grade-mark ${grade === "ok" ? "mark-ok" : grade === "miss" ? "mark-miss" : ""}">${gradeLabel(grade)}</td>
+          <td></td>
+        `;
+        tr.children[1].textContent = item.answer || "未入力";
+        const actions = document.createElement("div");
+        actions.className = "grade-actions";
+        const miss = document.createElement("button");
+        miss.className = "miss";
+        miss.type = "button";
+        miss.textContent = "✕";
+        miss.addEventListener("click", () => setGrade(item.number, "miss"));
+        const ok = document.createElement("button");
+        ok.className = "ok";
+        ok.type = "button";
+        ok.textContent = "〇";
+        ok.addEventListener("click", () => setGrade(item.number, "ok"));
+        actions.append(miss, ok);
+        tr.children[3].appendChild(actions);
+        nodes.resultRows.appendChild(tr);
+      });
+    }
+
+    function setGrade(number, grade) {
+      if (grade === "ok") {
+        state.correct = uniqueNumbers([...state.correct, number]);
+        state.weak = state.weak.filter((item) => item !== number);
+      } else {
+        state.weak = uniqueNumbers([...state.weak, number]);
+        state.correct = state.correct.filter((item) => item !== number);
+      }
+      saveState();
+      renderResults();
+      renderStats();
+    }
+
+    function showSetup() {
+      showView("setup");
+      renderStats();
+    }
+
+    function showView(name) {
+      Object.entries(views).forEach(([key, node]) => {
+        node.classList.toggle("is-active", key === name);
+      });
+    }
+
+    function renderStats() {
+      const correct = state.correct.length;
+      const weak = state.weak.length;
+      const remaining = TOTAL_QUESTIONS - correct;
+      const statsHtml = `
+        <div class="stat"><span>〇 正解</span><strong>${correct}</strong></div>
+        <div class="stat"><span>✕ 苦手</span><strong>${weak}</strong></div>
+        <div class="stat"><span>残り</span><strong>${remaining}</strong></div>
+      `;
+      nodes.globalStats.innerHTML = statsHtml;
+      nodes.recordStats.innerHTML = statsHtml;
+      nodes.startWeak.disabled = weak === 0;
+      nodes.setupNote.textContent = `全${TOTAL_QUESTIONS}問 / 苦手問題 ${weak}問`;
+      nodes.questionCount.max = Math.max(1, TOTAL_QUESTIONS);
+    }
+
+    function loadState() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+        return normalizeState(parsed);
+      } catch {
+        return normalizeState(null);
+      }
+    }
+
+    function normalizeState(input) {
+      return {
+        correct: uniqueNumbers(Array.isArray(input?.correct) ? input.correct : []),
+        weak: uniqueNumbers(Array.isArray(input?.weak) ? input.weak : []),
+        lastAnswers: Array.isArray(input?.lastAnswers)
+          ? input.lastAnswers
+              .map((item) => ({ number: Number(item.number), answer: String(item.answer || "") }))
+              .filter((item) => Number.isInteger(item.number) && item.number >= 1 && item.number <= TOTAL_QUESTIONS)
+          : []
+      };
+    }
+
+    function saveState() {
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    }
+
+    function uniqueNumbers(values) {
+      return [...new Set(values.map(Number))]
+        .filter((value) => Number.isInteger(value) && value >= 1 && value <= TOTAL_QUESTIONS)
+        .sort((a, b) => a - b);
+    }
+
+    function clampCount(value) {
+      const number = Math.round(Number(value));
+      if (!Number.isFinite(number)) return 20;
+      return Math.max(1, Math.min(TOTAL_QUESTIONS, number));
+    }
+
+    function shuffle(items) {
+      const next = items.slice();
+      for (let index = next.length - 1; index > 0; index -= 1) {
+        const swap = Math.floor(Math.random() * (index + 1));
+        [next[index], next[swap]] = [next[swap], next[index]];
+      }
+      return next;
+    }
+
+    function mergeLatestAnswers(answers) {
+      const map = new Map();
+      answers.forEach((item) => map.set(item.number, item));
+      return [...map.values()];
+    }
+
+    function gradeFor(number) {
+      if (state.correct.includes(number)) return "ok";
+      if (state.weak.includes(number)) return "miss";
+      return "";
+    }
+
+    function gradeLabel(grade) {
+      if (grade === "ok") return "〇";
+      if (grade === "miss") return "✕";
+      return "未採点";
+    }
+  </script>
+</body>
+</html>
