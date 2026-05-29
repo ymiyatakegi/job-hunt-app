@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>就活企業シート ES管理版</title>
+  <style>
+    :root {
+      --bg: #3103fef7;
+      --surface: #000000;
+      --surface-2: #0181f8;
+      --line: #8400ff;
+      --text: #080808;
+      --muted: #061af2;
+      --accent: #4000ff;
+      --accent-dark: #005e76;
+      --danger: #0e05ff;
+      --urgent: #0382f9;
+      --unentered: #032cf8;
+      --unsubmitted: #2703f3;
+      --submitted: #4804f6;
+      --row-a: #aadbf8;
+      --row-b: #a5bbfe;
+      --small: 150px;
+      --medium: 240px;
+      --large: 360px;
+      --es: 460px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(20, 108, 99, 0.12), transparent 28%),
+        radial-gradient(circle at 98% 8%, rgba(180, 35, 24, 0.1), transparent 26%),
+        linear-gradient(180deg, #fcfaf5 0%, var(--bg) 100%);
+    }
+
+    button, input, textarea, select { font: inherit; }
+    button {
+      cursor: pointer;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      padding: 9px 13px;
+      font-weight: 700;
+      transition: transform 140ms ease, border-color 140ms ease, background-color 140ms ease;
+    }
+    button:hover { transform: translateY(-1px); }
+    input[type="text"], input[type="url"], input[type="date"], input[type="number"], select, textarea {
+      width: 100%;
+      border: 1px solid rgba(181, 151, 109, 0.45);
+      border-radius: 8px;
+      background: rgba(255, 253, 249, 0.98);
+      color: var(--text);
+    }
+    input[type="text"], input[type="url"], input[type="date"], input[type="number"], select {
+      min-height: 38px;
+      padding: 8px 10px;
+    }
+    textarea {
+      min-height: 82px;
+      padding: 9px 10px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid rgba(20, 108, 99, 0.18);
+      border-color: var(--accent);
+    }
+
+    .app { padding: 28px; }
+    .hero, .panel, .modal-card {
+      background: rgba(255, 253, 248, 0.96);
+      border: 1px solid rgba(181, 151, 109, 0.3);
+      border-radius: 8px;
+      box-shadow: 0 16px 36px rgba(70, 52, 30, 0.12);
+    }
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: end;
+      padding: 22px;
+      margin-bottom: 16px;
+    }
+    .eyebrow {
+      margin: 0 0 7px;
+      color: var(--accent);
+      font-size: 0.86rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; font-size: clamp(1.75rem, 1.8vw + 1.2rem, 2.8rem); line-height: 1.15; }
+    .hero p:last-child { margin: 10px 0 0; color: var(--muted); }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .primary { color: #fff; background: var(--accent); }
+    .secondary { color: var(--text); background: #fffdf9; border-color: var(--line); }
+    .danger { color: var(--danger); background: rgba(180, 35, 24, 0.08); border-color: rgba(180, 35, 24, 0.25); }
+    .panel { padding: 16px; margin-bottom: 16px; }
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.2fr) minmax(360px, 2fr) auto;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 14px;
+    }
+    .company-filter-row {
+      display: grid;
+      grid-template-columns: minmax(150px, 1fr) auto auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .check-filter {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .field, .search-box { display: flex; flex-direction: column; gap: 6px; }
+    .field-label, .search-box label { color: var(--muted); font-size: 0.86rem; font-weight: 800; }
+    .es-search-row {
+      display: grid;
+      grid-template-columns: minmax(160px, 1fr) 110px auto;
+      gap: 8px;
+      align-items: center;
+    }
+    .search-result {
+      margin: 7px 0 0;
+      min-height: 1.3em;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .table-wrap {
+      overflow: auto;
+      max-height: 66vh;
+      border: 1px solid rgba(181, 151, 109, 0.3);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+    table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; }
+    th, td {
+      border-right: 1px solid rgba(181, 151, 109, 0.3);
+      border-bottom: 1px solid rgba(181, 151, 109, 0.3);
+      vertical-align: top;
+      background: rgba(255, 251, 246, 0.92);
+    }
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 12px;
+      text-align: left;
+      background: var(--surface-2);
+      font-size: 0.92rem;
+    }
+    tbody tr:nth-child(odd) td { background: var(--row-a); }
+    tbody tr:nth-child(even) td { background: var(--row-b); }
+    tbody tr.is-favorite td {
+      background: #f9d521;
+      box-shadow: inset 0 3px 0 var(--danger), inset 0 -3px 0 var(--danger);
+    }
+    tbody tr.is-favorite td:first-child { box-shadow: inset 3px 0 0 var(--danger), inset 0 3px 0 var(--danger), inset 0 -3px 0 var(--danger); }
+    tbody tr.is-favorite td:last-child { box-shadow: inset -3px 0 0 var(--danger), inset 0 3px 0 var(--danger), inset 0 -3px 0 var(--danger); }
+    th:last-child, td:last-child { border-right: 0; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .small { width: var(--small); min-width: var(--small); }
+    .medium { width: var(--medium); min-width: var(--medium); }
+    .large { width: var(--large); min-width: var(--large); }
+    .es-col { width: var(--es); min-width: var(--es); }
+    .favorite-col { width: 54px; min-width: 54px; }
+    .action { width: 94px; min-width: 94px; }
+    .sticky-company {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      box-shadow: 8px 0 18px rgba(250, 243, 235, 0.08);
+    }
+    thead .sticky-company { z-index: 6; background: #a151ec; }
+    tbody tr:nth-child(odd) .sticky-company { background: #aadbf8; }
+    tbody tr:nth-child(even) .sticky-company { background: #a5bbfe; }
+    tbody tr.is-favorite td,
+    tbody tr.is-favorite .sticky-company { background: #01ffff; }
+    .cell { padding: 8px; display: flex; flex-direction: column; gap: 7px; }
+    .status-select { font-weight: 800; color: #fff; border-color: transparent; }
+    .status-unentered { background: var(--unentered); }
+    .status-unsubmitted { background: var(--unsubmitted); }
+    .status-urgent { background: var(--urgent); }
+    .status-submitted { background: var(--submitted); }
+    .favorite-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .link-button, .copy-button, .mini-button {
+      align-self: flex-start;
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-weight: 800;
+      font-size: 0.86rem;
+    }
+    .link-button { color: #fff; background: var(--accent-dark); }
+    .copy-button, .mini-button { color: var(--accent-dark); border: 1px solid rgba(20, 108, 99, 0.25); background: rgba(20, 108, 99, 0.08); }
+    .es-items { display: flex; flex-direction: column; gap: 7px; }
+    .es-add-button {
+      align-self: flex-start;
+      border-radius: 8px;
+      color: var(--accent-dark);
+      border-color: rgba(20, 108, 99, 0.25);
+      background: rgba(20, 108, 99, 0.08);
+    }
+    .es-selected {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+    .es-selected-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      max-width: 100%;
+      padding: 6px 8px;
+      border: 1px solid rgba(20, 108, 99, 0.25);
+      border-radius: 8px;
+      background: rgba(255, 253, 249, 0.9);
+      font-weight: 800;
+    }
+    .es-item {
+      display: grid;
+      grid-template-columns: 22px minmax(90px, 1fr) 96px;
+      gap: 7px;
+      align-items: center;
+      padding: 7px;
+      border: 1px solid rgba(181, 151, 109, 0.28);
+      border-radius: 8px;
+      background: rgba(255, 253, 249, 0.82);
+    }
+    .es-picker {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      padding: 8px;
+      border: 1px solid rgba(181, 151, 109, 0.3);
+      border-radius: 8px;
+      background: rgba(255, 250, 243, 0.86);
+    }
+    .es-custom {
+      display: grid;
+      grid-template-columns: minmax(130px, 1fr) 96px auto;
+      gap: 7px;
+      align-items: center;
+    }
+    .es-title { min-width: 0; }
+    .es-title strong, .es-title small { display: block; overflow-wrap: anywhere; }
+    .es-title small { color: var(--muted); margin-top: 2px; }
+    .open-answer {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border-radius: 50%;
+      color: var(--accent-dark);
+      border-color: rgba(20, 108, 99, 0.28);
+      background: rgba(20, 108, 99, 0.08);
+    }
+    .muted { color: var(--muted); font-size: 0.88rem; }
+    .modal.is-hidden, .is-hidden { display: none; }
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(43, 36, 28, 0.35);
+    }
+    .modal-card { width: min(100%, 720px); padding: 18px; }
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 14px;
+    }
+    .modal-head h2, .modal-head p { margin: 0; }
+    .modal-head p { color: var(--muted); margin-top: 5px; }
+    .icon-button {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border-radius: 50%;
+      color: var(--text);
+      background: #fffdf9;
+      border-color: var(--line);
+    }
+    .answer-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-weight: 800;
+      margin: 8px 0 0;
+    }
+    .schedule-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .schedule-title h2,
+    .schedule-title p,
+    .day-number { margin: 0; }
+    .schedule-title h2 { font-size: 1.28rem; }
+    .schedule-title p { margin-top: 5px; color: var(--muted); }
+    .schedule-nav { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .month-label { min-width: 150px; text-align: center; font-weight: 800; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+    .weekday, .day-card {
+      border: 1px solid rgba(181, 151, 109, 0.26);
+      border-radius: 8px;
+      background: rgba(255, 252, 247, 0.92);
+    }
+    .weekday { padding: 9px; text-align: center; color: var(--muted); font-weight: 800; }
+    .day-card { min-height: 132px; padding: 9px; display: flex; flex-direction: column; gap: 7px; }
+    .day-card.is-outside { opacity: 0.45; }
+    .day-card.is-today { border-color: var(--accent); box-shadow: inset 0 0 0 1px rgba(20, 108, 99, 0.18); }
+    .day-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .add-event-button {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 50%;
+      color: var(--accent-dark);
+      border-color: rgba(20, 108, 99, 0.24);
+      background: rgba(20, 108, 99, 0.08);
+    }
+    .day-events { display: flex; flex-direction: column; gap: 5px; }
+    .event-chip {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px;
+      border: 0;
+      border-radius: 8px;
+      padding: 5px 7px;
+      color: #f2f7f7;
+      text-align: left;
+      font-size: 0.82rem;
+      overflow: hidden;
+    }
+    .event-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .event-chip small { opacity: 0.9; font-size: 0.72rem; }
+    .event-chip.is-deadline { background: #0602ea; }
+    .event-chip.is-manual { background: #2563eb; }
+    .event-chip.is-test { background: #6d597a; }
+    .event-chip.is-interview { background: #0f766e; }
+    .empty-note { color: #94897a; font-size: 0.78rem; margin: 0; padding-top: 4px; }
+
+    @media (max-width: 980px) {
+      .app { padding: 18px; }
+      .hero { flex-direction: column; align-items: stretch; }
+      .toolbar, .company-filter-row, .es-search-row, .es-custom { grid-template-columns: 1fr; }
+      .calendar-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .weekday { display: none; }
+      .schedule-head { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Company Sheet ES Edition</p>
+        <h1>就活企業シート</h1>
+        <p>ES締め切り、企業状態、本命企業、ES設問と回答をまとめて管理します。</p>
+      </div>
+      <div class="actions">
+        <button id="addRow" class="primary" type="button">企業を追加</button>
+        <button id="resetAll" class="secondary" type="button">全消去</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="toolbar">
+        <div class="search-box">
+          <label for="companySearch">企業検索</label>
+          <div class="company-filter-row">
+            <input id="companySearch" type="text" placeholder="企業名で絞り込み">
+            <label class="check-filter"><input id="favoriteOnly" type="checkbox">本命のみ</label>
+            <label class="check-filter"><input id="practiceOnly" type="checkbox">練習のみ</label>
+          </div>
+        </div>
+        <div class="search-box">
+          <label for="esSearchText">ES設問検索</label>
+          <div class="es-search-row">
+            <input id="esSearchText" type="text" placeholder="例: ガクチカ">
+            <input id="esSearchChars" type="number" min="0" step="1" placeholder="文字数">
+            <button id="esSearchButton" class="secondary" type="button">検索</button>
+          </div>
+          <p id="esSearchResult" class="search-result"></p>
+        </div>
+        <p id="status" class="muted">保存済み</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr id="headRow"></tr></thead>
+          <tbody id="bodyRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="schedule-head">
+        <div class="schedule-title">
+          <h2>カレンダー</h2>
+          <p>ES締め切りは自動表示、面接や説明会などは手動で追加できます。</p>
+        </div>
+        <div class="schedule-nav">
+          <button id="prevMonth" class="secondary" type="button">前の月</button>
+          <div id="monthLabel" class="month-label"></div>
+          <button id="nextMonth" class="secondary" type="button">次の月</button>
+        </div>
+      </div>
+      <div id="calendarGrid" class="calendar-grid"></div>
+    </section>
+  </main>
+
+  <div id="answerModal" class="modal is-hidden" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h2 id="answerTitle">ES回答</h2>
+          <p id="answerSubTitle"></p>
+        </div>
+        <button id="closeAnswerModal" class="icon-button" type="button">&times;</button>
+      </div>
+      <textarea id="answerBody" placeholder="ここに回答を保存"></textarea>
+      <div class="answer-meta">
+        <span id="answerCount">0文字</span>
+        <span id="answerLimit">目安: 0文字</span>
+      </div>
+      <div class="actions" style="justify-content: flex-end; margin-top: 14px;">
+        <button id="cancelAnswer" class="secondary" type="button">閉じる</button>
+        <button id="saveAnswer" class="primary" type="button">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="eventModal" class="modal is-hidden" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h2>予定を追加</h2>
+          <p id="eventDateLabel"></p>
+        </div>
+        <button id="closeEventModal" class="icon-button" type="button">&times;</button>
+      </div>
+      <div class="field">
+        <span class="field-label">日付</span>
+        <input id="eventDate" type="date">
+      </div>
+      <div class="field">
+        <span class="field-label">種類</span>
+        <select id="eventCategory">
+          <option value="manual">予定</option>
+          <option value="test">適性検査</option>
+          <option value="interview">面接</option>
+        </select>
+      </div>
+      <div class="field">
+        <span class="field-label">予定名</span>
+        <input id="eventTitle" type="text" placeholder="例: 〇〇株式会社 1次面接">
+      </div>
+      <div class="field">
+        <span class="field-label">メモ</span>
+        <textarea id="eventNote" placeholder="持ち物、URL、時間など"></textarea>
+      </div>
+      <div class="actions" style="justify-content: space-between; margin-top: 14px;">
+        <button id="deleteEvent" class="danger is-hidden" type="button">削除</button>
+        <div class="actions">
+          <button id="cancelEvent" class="secondary" type="button">閉じる</button>
+          <button id="saveEvent" class="primary" type="button">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "job-hunt-company-sheet-es-v2";
+    const SCHEDULE_STORAGE_KEY = "job-hunt-company-sheet-es-schedule-v1";
+    const LEGACY_STORAGE_KEY = "job-hunt-company-sheet-remake-v1";
+
+    const statusOptions = [
+      { value: "unentered", label: "未エントリー", className: "status-unentered", rank: 1 },
+      { value: "unsubmitted", label: "未提出", className: "status-unsubmitted", rank: 2 },
+      { value: "urgent", label: "提出緊急", className: "status-urgent", rank: 3 },
+      { value: "submitted", label: "提出済み", className: "status-submitted", rank: 5 }
+    ];
+
+    const columns = [
+      { key: "companyName", label: "企業名", size: "small", sticky: true, type: "textarea" },
+      { key: "recruitPage", label: "採用ページ", size: "medium", type: "url" },
+      { key: "loginId", label: "ID", size: "small", type: "copy" },
+      { key: "deadline", label: "ES提出締め切り", size: "small", type: "date" },
+      { key: "state", label: "企業状態", size: "small", type: "status" },
+      { key: "favorite", label: "□", size: "favorite-col", type: "favorite" },
+      { key: "esContent", label: "ES内容", size: "es-col", type: "es" },
+      { key: "aptitudeTest", label: "適性検査", size: "medium", type: "textarea" },
+      { key: "firstInterview", label: "1次面接", size: "medium", type: "textarea" },
+      { key: "secondInterview", label: "2次面接", size: "medium", type: "textarea" }
+    ];
+
+    const headRow = document.getElementById("headRow");
+    const bodyRows = document.getElementById("bodyRows");
+    const addRowButton = document.getElementById("addRow");
+    const resetAllButton = document.getElementById("resetAll");
+    const statusNode = document.getElementById("status");
+    const companySearchInput = document.getElementById("companySearch");
+    const favoriteOnlyInput = document.getElementById("favoriteOnly");
+    const practiceOnlyInput = document.getElementById("practiceOnly");
+    const esSearchText = document.getElementById("esSearchText");
+    const esSearchChars = document.getElementById("esSearchChars");
+    const esSearchButton = document.getElementById("esSearchButton");
+    const esSearchResult = document.getElementById("esSearchResult");
+    const answerModal = document.getElementById("answerModal");
+    const closeAnswerModal = document.getElementById("closeAnswerModal");
+    const cancelAnswer = document.getElementById("cancelAnswer");
+    const saveAnswer = document.getElementById("saveAnswer");
+    const answerTitle = document.getElementById("answerTitle");
+    const answerSubTitle = document.getElementById("answerSubTitle");
+    const answerBody = document.getElementById("answerBody");
+    const answerCount = document.getElementById("answerCount");
+    const answerLimit = document.getElementById("answerLimit");
+    const calendarGrid = document.getElementById("calendarGrid");
+    const monthLabel = document.getElementById("monthLabel");
+    const prevMonthButton = document.getElementById("prevMonth");
+    const nextMonthButton = document.getElementById("nextMonth");
+    const eventModal = document.getElementById("eventModal");
+    const eventDateLabel = document.getElementById("eventDateLabel");
+    const eventDateInput = document.getElementById("eventDate");
+    const eventCategoryInput = document.getElementById("eventCategory");
+    const eventTitleInput = document.getElementById("eventTitle");
+    const eventNoteInput = document.getElementById("eventNote");
+    const closeEventModalButton = document.getElementById("closeEventModal");
+    const cancelEventButton = document.getElementById("cancelEvent");
+    const saveEventButton = document.getElementById("saveEvent");
+    const deleteEventButton = document.getElementById("deleteEvent");
+
+    let state = loadState();
+    let schedules = loadSchedules();
+    let companySearchQuery = "";
+    let favoriteOnly = false;
+    let practiceOnly = false;
+    let expandedEsRowId = null;
+    let editingAnswer = null;
+    let editingEventId = null;
+    let currentMonth = new Date();
+    currentMonth.setDate(1);
+
+    render();
+    renderCalendar();
+
+    addRowButton.addEventListener("click", () => {
+      state.rows.push(emptyRow());
+      render();
+      saveState();
+    });
+
+    resetAllButton.addEventListener("click", () => {
+      if (!window.confirm("入力済みの企業情報とES内容をすべて削除します。よろしいですか？")) {
+        return;
+      }
+      const prompts = defaultPrompts();
+      state = { rows: [emptyRow(null, prompts)], prompts };
+      render();
+      renderCalendar();
+      saveState();
+    });
+
+    companySearchInput.addEventListener("input", (event) => {
+      companySearchQuery = event.target.value.trim().toLowerCase();
+      renderRows();
+    });
+
+    favoriteOnlyInput.addEventListener("change", (event) => {
+      favoriteOnly = event.target.checked;
+      if (favoriteOnly) {
+        practiceOnly = false;
+        practiceOnlyInput.checked = false;
+      }
+      renderRows();
+    });
+
+    practiceOnlyInput.addEventListener("change", (event) => {
+      practiceOnly = event.target.checked;
+      if (practiceOnly) {
+        favoriteOnly = false;
+        favoriteOnlyInput.checked = false;
+      }
+      renderRows();
+    });
+
+    esSearchButton.addEventListener("click", runEsSearch);
+    esSearchText.addEventListener("keydown", submitSearchOnEnter);
+    esSearchChars.addEventListener("keydown", submitSearchOnEnter);
+    closeAnswerModal.addEventListener("click", closeModal);
+    cancelAnswer.addEventListener("click", closeModal);
+    answerModal.addEventListener("click", (event) => {
+      if (event.target === answerModal) {
+        closeModal();
+      }
+    });
+    answerBody.addEventListener("input", updateAnswerCount);
+    saveAnswer.addEventListener("click", saveCurrentAnswer);
+    prevMonthButton.addEventListener("click", () => {
+      currentMonth.setMonth(currentMonth.getMonth() - 1);
+      renderCalendar();
+    });
+    nextMonthButton.addEventListener("click", () => {
+      currentMonth.setMonth(currentMonth.getMonth() + 1);
+      renderCalendar();
+    });
+    closeEventModalButton.addEventListener("click", closeEventModal);
+    cancelEventButton.addEventListener("click", closeEventModal);
+    eventModal.addEventListener("click", (event) => {
+      if (event.target === eventModal) {
+        closeEventModal();
+      }
+    });
+    saveEventButton.addEventListener("click", saveCurrentEvent);
+    deleteEventButton.addEventListener("click", deleteCurrentEvent);
+
+    function render() {
+      renderHead();
+      renderRows();
+      renderCalendar();
+    }
+
+    function renderHead() {
+      headRow.innerHTML = "";
+      columns.forEach((column) => {
+        const th = document.createElement("th");
+        th.className = column.size + (column.sticky ? " sticky-company" : "");
+        th.textContent = column.label;
+        headRow.appendChild(th);
+      });
+      const actionTh = document.createElement("th");
+      actionTh.className = "action";
+      actionTh.textContent = "削除";
+      headRow.appendChild(actionTh);
+    }
+
+    function renderRows() {
+      bodyRows.innerHTML = "";
+      sortedRows().forEach(({ row, originalIndex }) => {
+        const companyName = String(row.companyName || "").toLowerCase();
+        if (companySearchQuery && !companyName.includes(companySearchQuery)) {
+          return;
+        }
+        if (favoriteOnly && !row.favorite) {
+          return;
+        }
+        if (practiceOnly && row.favorite) {
+          return;
+        }
+        const tr = document.createElement("tr");
+        tr.id = "company-row-" + row.id;
+        tr.classList.toggle("is-favorite", Boolean(row.favorite));
+        columns.forEach((column) => {
+          const td = document.createElement("td");
+          td.className = column.size + (column.sticky ? " sticky-company" : "");
+          td.appendChild(createCell(row, originalIndex, column));
+          tr.appendChild(td);
+        });
+
+        const actionTd = document.createElement("td");
+        actionTd.className = "action";
+        const actionWrap = document.createElement("div");
+        actionWrap.className = "cell";
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "danger";
+        removeButton.textContent = "削除";
+        removeButton.addEventListener("click", () => {
+          state.rows.splice(originalIndex, 1);
+          if (state.rows.length === 0) {
+            state.rows = [emptyRow()];
+          }
+          renderRows();
+          renderCalendar();
+          saveState();
+        });
+        actionWrap.appendChild(removeButton);
+        actionTd.appendChild(actionWrap);
+        tr.appendChild(actionTd);
+        bodyRows.appendChild(tr);
+      });
+    }
+
+    function createCell(row, rowIndex, column) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      if (column.type === "status") {
+        cell.appendChild(createStatusSelect(row, rowIndex));
+        return cell;
+      }
+      if (column.type === "favorite") {
+        cell.appendChild(createFavoriteInput(row, rowIndex));
+        return cell;
+      }
+      if (column.type === "es") {
+        cell.appendChild(createEsContent(row, rowIndex));
+        return cell;
+      }
+
+      const input = column.type === "textarea" || column.type === "url" || column.type === "copy"
+        ? document.createElement("textarea")
+        : document.createElement("input");
+      if (column.type === "date") {
+        input.type = "date";
+      }
+      input.value = row[column.key] || "";
+      input.setAttribute("aria-label", column.label);
+      if (input.tagName === "TEXTAREA") {
+        fit(input);
+      }
+      input.addEventListener("input", (event) => {
+        state.rows[rowIndex][column.key] = event.target.value;
+        if (event.target.tagName === "TEXTAREA") {
+          fit(event.target);
+        }
+        updateCellExtras(cell, column, event.target.value);
+        saveState();
+        if (column.key === "deadline") {
+          renderRows();
+          renderCalendar();
+        }
+      });
+      cell.appendChild(input);
+      updateCellExtras(cell, column, input.value);
+      return cell;
+    }
+
+    function createStatusSelect(row, rowIndex) {
+      const select = document.createElement("select");
+      select.className = "status-select " + statusMeta(row.state).className;
+      statusOptions.forEach((option) => {
+        const node = document.createElement("option");
+        node.value = option.value;
+        node.textContent = option.label;
+        select.appendChild(node);
+      });
+      select.value = row.state || "unentered";
+      select.addEventListener("change", (event) => {
+        state.rows[rowIndex].state = event.target.value;
+        renderRows();
+        saveState();
+      });
+      return select;
+    }
+
+    function createFavoriteInput(row, rowIndex) {
+      const label = document.createElement("label");
+      label.className = "favorite-toggle";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = Boolean(row.favorite);
+      input.addEventListener("change", (event) => {
+        state.rows[rowIndex].favorite = event.target.checked;
+        renderRows();
+        saveState();
+      });
+      label.appendChild(input);
+      return label;
+    }
+
+    function createEsContent(row, rowIndex) {
+      const wrap = document.createElement("div");
+      wrap.className = "es-items";
+
+      const selected = document.createElement("div");
+      selected.className = "es-selected";
+      state.prompts.forEach((prompt) => {
+        ensurePromptData(row, prompt.id);
+        const data = row.es[prompt.id];
+        if (!data.checked) {
+          return;
+        }
+        const chip = document.createElement("div");
+        chip.className = "es-selected-chip";
+        const text = document.createElement("span");
+        text.textContent = prompt.title + (data.limit ? data.limit + "文字" : "");
+        chip.appendChild(text);
+        const open = document.createElement("button");
+        open.type = "button";
+        open.className = "open-answer";
+        open.textContent = "▶";
+        open.title = "回答を開く";
+        open.addEventListener("click", () => openAnswer(rowIndex, prompt.id));
+        chip.appendChild(open);
+        selected.appendChild(chip);
+      });
+      if (selected.children.length > 0) {
+        wrap.appendChild(selected);
+      }
+
+      const addButton = document.createElement("button");
+      addButton.type = "button";
+      addButton.className = "es-add-button";
+      addButton.textContent = "+設問";
+      addButton.addEventListener("click", () => {
+        expandedEsRowId = expandedEsRowId === row.id ? null : row.id;
+        renderRows();
+      });
+      wrap.appendChild(addButton);
+
+      if (expandedEsRowId === row.id) {
+        wrap.appendChild(createEsPicker(row, rowIndex));
+      }
+      return wrap;
+    }
+
+    function createEsPicker(row, rowIndex) {
+      const picker = document.createElement("div");
+      picker.className = "es-picker";
+      state.prompts.forEach((prompt) => {
+        ensurePromptData(row, prompt.id);
+        const item = document.createElement("div");
+        item.className = "es-item";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = Boolean(row.es[prompt.id].checked);
+        item.appendChild(checkbox);
+
+        const title = document.createElement("span");
+        title.textContent = prompt.title;
+        item.appendChild(title);
+
+        const limit = document.createElement("input");
+        limit.type = "number";
+        limit.min = "0";
+        limit.step = "1";
+        limit.placeholder = "文字数";
+        limit.value = row.es[prompt.id].limit || "";
+        item.appendChild(limit);
+
+        checkbox.addEventListener("change", (event) => {
+          const data = state.rows[rowIndex].es[prompt.id];
+          data.checked = event.target.checked;
+          data.limit = Number(limit.value) || 0;
+          renderRows();
+          saveState();
+        });
+        limit.addEventListener("input", (event) => {
+          const data = state.rows[rowIndex].es[prompt.id];
+          data.limit = Number(event.target.value) || 0;
+          if (data.limit > 0) {
+            data.checked = true;
+          }
+          saveState();
+        });
+        limit.addEventListener("change", () => renderRows());
+        picker.appendChild(item);
+      });
+
+      const custom = document.createElement("div");
+      custom.className = "es-custom";
+      const customTitle = document.createElement("input");
+      customTitle.type = "text";
+      customTitle.placeholder = "設問を追加";
+      const customLimit = document.createElement("input");
+      customLimit.type = "number";
+      customLimit.min = "0";
+      customLimit.step = "1";
+      customLimit.placeholder = "文字数";
+      const customButton = document.createElement("button");
+      customButton.type = "button";
+      customButton.className = "mini-button";
+      customButton.textContent = "追加";
+      customButton.addEventListener("click", () => addCustomPrompt(rowIndex, customTitle.value, customLimit.value));
+      customTitle.addEventListener("keydown", (event) => submitCustomPromptOnEnter(event, rowIndex, customTitle, customLimit));
+      customLimit.addEventListener("keydown", (event) => submitCustomPromptOnEnter(event, rowIndex, customTitle, customLimit));
+      custom.appendChild(customTitle);
+      custom.appendChild(customLimit);
+      custom.appendChild(customButton);
+      picker.appendChild(custom);
+      return picker;
+    }
+
+    function updateCellExtras(cell, column, rawValue) {
+      cell.querySelectorAll(".link-button, .copy-button").forEach((node) => node.remove());
+      const trimmed = String(rawValue || "").trim();
+      if (column.type === "url") {
+        const href = normalizeUrl(trimmed);
+        if (!href) {
+          return;
+        }
+        const link = document.createElement("a");
+        link.className = "link-button";
+        link.href = href;
+        link.target = "_blank";
+        link.rel = "noreferrer noopener";
+        link.textContent = "採用ページを開く";
+        cell.appendChild(link);
+        return;
+      }
+      if (column.type === "copy" && trimmed) {
+        const copyButton = document.createElement("button");
+        copyButton.type = "button";
+        copyButton.className = "copy-button";
+        copyButton.textContent = "IDをコピー";
+        copyButton.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(trimmed);
+            copyButton.textContent = "コピー済み";
+          } catch (error) {
+            copyButton.textContent = "コピー失敗";
+          }
+          setTimeout(() => {
+            copyButton.textContent = "IDをコピー";
+          }, 1200);
+        });
+        cell.appendChild(copyButton);
+      }
+    }
+
+    function addCustomPrompt(rowIndex, rawTitle, rawLimit) {
+      const title = String(rawTitle || "").trim();
+      if (!title) {
+        return;
+      }
+      const limit = Number(rawLimit) || 0;
+      let prompt = state.prompts.find((item) => item.title === title);
+      if (!prompt) {
+        prompt = { id: uniqueId("prompt"), title, limit: 0 };
+        state.prompts.push(prompt);
+        state.rows.forEach((row) => ensurePromptData(row, prompt.id));
+      }
+      ensurePromptData(state.rows[rowIndex], prompt.id);
+      state.rows[rowIndex].es[prompt.id].checked = true;
+      state.rows[rowIndex].es[prompt.id].limit = limit;
+      renderRows();
+      saveState();
+    }
+
+    function submitCustomPromptOnEnter(event, rowIndex, titleInput, limitInput) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        addCustomPrompt(rowIndex, titleInput.value, limitInput.value);
+      }
+    }
+
+    function submitSearchOnEnter(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        runEsSearch();
+      }
+    }
+
+    function runEsSearch() {
+      const query = esSearchText.value.trim().toLowerCase();
+      const limitText = esSearchChars.value.trim();
+      if (!query && !limitText) {
+        esSearchResult.textContent = "設問名か文字数を入力してください。";
+        return;
+      }
+      const matches = [];
+      state.rows.forEach((row) => {
+        const hasMatch = state.prompts.some((prompt) => {
+          const sameTitle = query ? prompt.title.toLowerCase().includes(query) : true;
+          const data = row.es && row.es[prompt.id];
+          const sameLimit = limitText ? String(data && data.limit ? data.limit : "") === limitText : true;
+          return sameTitle && sameLimit && data && data.checked;
+        });
+        if (hasMatch) {
+          matches.push(row.companyName || "企業名未入力");
+        }
+      });
+      esSearchResult.textContent = matches.length > 0 ? "該当企業: " + matches.join("、") : "ないです";
+    }
+
+    function openAnswer(rowIndex, promptId) {
+      const row = state.rows[rowIndex];
+      const prompt = promptById(promptId);
+      ensurePromptData(row, promptId);
+      const data = row.es[promptId];
+      const limit = data.limit || 0;
+      editingAnswer = { rowIndex, promptId };
+      answerTitle.textContent = prompt.title;
+      answerSubTitle.textContent = (row.companyName || "企業名未入力") + " / " + (limit ? limit + "文字" : "文字数自由");
+      answerBody.value = data.answer || "";
+      answerLimit.textContent = limit ? "目安: " + limit + "文字" : "目安: 文字数自由";
+      updateAnswerCount();
+      answerModal.classList.remove("is-hidden");
+      answerModal.setAttribute("aria-hidden", "false");
+      answerBody.focus();
+    }
+
+    function closeModal() {
+      editingAnswer = null;
+      answerBody.value = "";
+      answerModal.classList.add("is-hidden");
+      answerModal.setAttribute("aria-hidden", "true");
+    }
+
+    function saveCurrentAnswer() {
+      if (!editingAnswer) {
+        return;
+      }
+      const row = state.rows[editingAnswer.rowIndex];
+      ensurePromptData(row, editingAnswer.promptId);
+      row.es[editingAnswer.promptId].answer = answerBody.value;
+      row.es[editingAnswer.promptId].checked = true;
+      renderRows();
+      saveState();
+      closeModal();
+    }
+
+    function updateAnswerCount() {
+      const count = Array.from(answerBody.value).length;
+      const row = editingAnswer ? state.rows[editingAnswer.rowIndex] : null;
+      const data = row && row.es ? row.es[editingAnswer.promptId] : null;
+      const limit = data ? data.limit : 0;
+      answerCount.textContent = count + "文字";
+      answerCount.style.color = limit && count > limit ? "var(--danger)" : "var(--muted)";
+    }
+
+    function renderCalendar() {
+      if (!calendarGrid || !monthLabel) {
+        return;
+      }
+      calendarGrid.innerHTML = "";
+      monthLabel.textContent = currentMonth.getFullYear() + "年" + String(currentMonth.getMonth() + 1).padStart(2, "0") + "月";
+      ["日", "月", "火", "水", "木", "金", "土"].forEach((weekday) => {
+        const node = document.createElement("div");
+        node.className = "weekday";
+        node.textContent = weekday;
+        calendarGrid.appendChild(node);
+      });
+
+      const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      const startDate = new Date(firstDay);
+      startDate.setDate(firstDay.getDate() - firstDay.getDay());
+      const totalCells = needsSixthCalendarRow(startDate, currentMonth.getMonth()) ? 42 : 35;
+      const events = calendarEvents();
+
+      for (let index = 0; index < totalCells; index += 1) {
+        const cellDate = new Date(startDate);
+        cellDate.setDate(startDate.getDate() + index);
+        const dateKey = formatDate(cellDate);
+        calendarGrid.appendChild(createDayCard(cellDate, events.filter((item) => item.date === dateKey)));
+      }
+    }
+
+    function createDayCard(date, dayEvents) {
+      const card = document.createElement("div");
+      card.className = "day-card";
+      if (date.getMonth() !== currentMonth.getMonth()) {
+        card.classList.add("is-outside");
+      }
+      if (isSameDate(date, new Date())) {
+        card.classList.add("is-today");
+      }
+
+      const top = document.createElement("div");
+      top.className = "day-top";
+      const number = document.createElement("p");
+      number.className = "day-number";
+      number.textContent = String(date.getDate());
+      top.appendChild(number);
+      const plusButton = document.createElement("button");
+      plusButton.type = "button";
+      plusButton.className = "add-event-button";
+      plusButton.textContent = "+";
+      plusButton.addEventListener("click", () => openEventModal(formatDate(date)));
+      top.appendChild(plusButton);
+      card.appendChild(top);
+
+      const eventsWrap = document.createElement("div");
+      eventsWrap.className = "day-events";
+      if (dayEvents.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "empty-note";
+        empty.textContent = "予定なし";
+        eventsWrap.appendChild(empty);
+      } else {
+        dayEvents.forEach((eventItem) => {
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = "event-chip " + eventItem.className;
+          chip.title = eventItem.note || eventItem.title;
+          const title = document.createElement("span");
+          title.textContent = eventItem.title;
+          const label = document.createElement("small");
+          label.textContent = eventItem.label;
+          chip.appendChild(title);
+          chip.appendChild(label);
+          chip.addEventListener("click", () => {
+            if (eventItem.source === "company") {
+              scrollToCompany(eventItem.rowId);
+            } else {
+              openEventModal(eventItem.date, eventItem.original);
+            }
+          });
+          eventsWrap.appendChild(chip);
+        });
+      }
+      card.appendChild(eventsWrap);
+      return card;
+    }
+
+    function calendarEvents() {
+      const companyEvents = state.rows
+        .filter((row) => isDateValue(row.deadline))
+        .map((row) => ({
+          source: "company",
+          rowId: row.id,
+          date: row.deadline,
+          title: row.companyName || "企業名未入力",
+          label: "ES締切",
+          className: "is-deadline",
+          note: "ES締切"
+        }));
+      const manualEvents = schedules
+        .filter((item) => isDateValue(item.date))
+        .map((item) => ({
+          source: "manual",
+          original: item,
+          date: item.date,
+          title: item.title,
+          label: eventCategoryLabel(item.category),
+          className: eventCategoryClass(item.category),
+          note: item.note || ""
+        }));
+      return [...companyEvents, ...manualEvents].sort((a, b) => a.label.localeCompare(b.label, "ja"));
+    }
+
+    function openEventModal(dateValue, existingEvent) {
+      editingEventId = existingEvent ? existingEvent.id : null;
+      eventDateInput.value = existingEvent ? existingEvent.date : dateValue;
+      eventCategoryInput.value = existingEvent ? existingEvent.category : "manual";
+      eventTitleInput.value = existingEvent ? existingEvent.title : "";
+      eventNoteInput.value = existingEvent ? existingEvent.note : "";
+      eventDateLabel.textContent = formatDateLabel(eventDateInput.value);
+      deleteEventButton.classList.toggle("is-hidden", !existingEvent);
+      eventModal.classList.remove("is-hidden");
+      eventModal.setAttribute("aria-hidden", "false");
+      eventTitleInput.focus();
+    }
+
+    function closeEventModal() {
+      editingEventId = null;
+      eventDateInput.value = "";
+      eventCategoryInput.value = "manual";
+      eventTitleInput.value = "";
+      eventNoteInput.value = "";
+      eventModal.classList.add("is-hidden");
+      eventModal.setAttribute("aria-hidden", "true");
+    }
+
+    function saveCurrentEvent() {
+      const item = {
+        id: editingEventId || uniqueId("event"),
+        date: eventDateInput.value,
+        category: eventCategoryInput.value,
+        title: eventTitleInput.value.trim(),
+        note: eventNoteInput.value.trim()
+      };
+      if (!isDateValue(item.date) || !item.title) {
+        return;
+      }
+      if (editingEventId) {
+        schedules = schedules.map((schedule) => schedule.id === editingEventId ? item : schedule);
+      } else {
+        schedules.push(item);
+      }
+      saveSchedules();
+      closeEventModal();
+      renderCalendar();
+    }
+
+    function deleteCurrentEvent() {
+      if (!editingEventId) {
+        return;
+      }
+      schedules = schedules.filter((schedule) => schedule.id !== editingEventId);
+      saveSchedules();
+      closeEventModal();
+      renderCalendar();
+    }
+
+    function scrollToCompany(rowId) {
+      const row = document.getElementById("company-row-" + rowId);
+      if (row) {
+        row.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+      }
+    }
+
+    function eventCategoryLabel(value) {
+      if (value === "test") {
+        return "適性検査";
+      }
+      if (value === "interview") {
+        return "面接";
+      }
+      return "予定";
+    }
+
+    function eventCategoryClass(value) {
+      if (value === "test") {
+        return "is-test";
+      }
+      if (value === "interview") {
+        return "is-interview";
+      }
+      return "is-manual";
+    }
+
+    function sortedRows() {
+      const today = startOfToday();
+      return state.rows
+        .map((row, originalIndex) => ({ row, originalIndex }))
+        .sort((a, b) => {
+          const aBucket = sortBucket(a.row, today);
+          const bBucket = sortBucket(b.row, today);
+          if (aBucket !== bBucket) {
+            return aBucket - bBucket;
+          }
+          const aTime = deadlineTime(a.row.deadline);
+          const bTime = deadlineTime(b.row.deadline);
+          if (aTime !== bTime) {
+            return aTime - bTime;
+          }
+          return (a.row.createdAt || 0) - (b.row.createdAt || 0);
+        });
+    }
+
+    function sortBucket(row, today) {
+      if (row.state === "submitted") {
+        return 3;
+      }
+      if (isPastDeadline(row.deadline, today)) {
+        return 2;
+      }
+      return 1;
+    }
+
+    function deadlineTime(value) {
+      if (!isDateValue(value)) {
+        return Number.MAX_SAFE_INTEGER;
+      }
+      return new Date(value + "T00:00:00").getTime();
+    }
+
+    function isPastDeadline(value, today) {
+      return isDateValue(value) && new Date(value + "T00:00:00").getTime() < today.getTime();
+    }
+
+    function statusMeta(value) {
+      return statusOptions.find((item) => item.value === value) || statusOptions[0];
+    }
+
+    function emptyRow(source, prompts) {
+      const row = {
+        id: uniqueId("row"),
+        createdAt: Date.now(),
+        companyName: "",
+        state: "unentered",
+        deadline: "",
+        favorite: false,
+        recruitPage: "",
+        loginId: "",
+        aptitudeTest: "",
+        firstInterview: "",
+        secondInterview: "",
+        es: {}
+      };
+      if (source) {
+        Object.assign(row, source);
+        row.id = source.id || uniqueId("row");
+        row.createdAt = source.createdAt || Date.now();
+        row.state = source.state || "unentered";
+        row.favorite = Boolean(source.favorite);
+        row.es = source.es && typeof source.es === "object" ? source.es : {};
+      }
+      const promptSource = prompts || statePrompts();
+      promptSource.forEach((prompt) => ensurePromptData(row, prompt.id));
+      return row;
+    }
+
+    function ensurePromptData(row, promptId) {
+      if (!row.es || typeof row.es !== "object") {
+        row.es = {};
+      }
+      if (!row.es[promptId]) {
+        row.es[promptId] = { checked: false, answer: "", limit: 0 };
+      } else if (typeof row.es[promptId].limit !== "number") {
+        row.es[promptId].limit = Number(row.es[promptId].limit) || 0;
+      }
+    }
+
+    function defaultPrompts() {
+      return [
+        { id: uniqueId("prompt"), title: "ガクチカ", limit: 0 },
+        { id: uniqueId("prompt"), title: "チーム", limit: 0 },
+        { id: uniqueId("prompt"), title: "研究内容", limit: 0 }
+      ];
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      updateStatus();
+    }
+
+    function saveSchedules() {
+      localStorage.setItem(SCHEDULE_STORAGE_KEY, JSON.stringify(schedules));
+      updateStatus();
+    }
+
+    function loadSchedules() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(SCHEDULE_STORAGE_KEY) || "[]");
+        if (Array.isArray(saved)) {
+          return saved
+            .filter((item) => item && item.id && isDateValue(item.date) && item.title)
+            .map((item) => ({
+              id: String(item.id),
+              date: String(item.date),
+              category: item.category ? String(item.category) : "manual",
+              title: String(item.title),
+              note: item.note ? String(item.note) : ""
+            }));
+        }
+      } catch (error) {
+      }
+      return [];
+    }
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        if (saved && Array.isArray(saved.rows) && Array.isArray(saved.prompts)) {
+          const loaded = {
+            prompts: saved.prompts.map(normalizePrompt).filter(Boolean),
+            rows: []
+          };
+          loaded.rows = saved.rows.map((row) => emptyRow(row, loaded.prompts));
+          if (loaded.rows.length === 0) {
+            loaded.rows = [emptyRow(null, loaded.prompts)];
+          }
+          return loaded;
+        }
+      } catch (error) {
+      }
+
+      const migrated = migrateLegacyRows();
+      const base = { prompts: defaultPrompts(), rows: [] };
+      base.rows = migrated.length > 0
+        ? migrated.map((row) => emptyRow(row, base.prompts))
+        : [emptyRow(null, base.prompts)];
+      return base;
+    }
+
+    function migrateLegacyRows() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(LEGACY_STORAGE_KEY) || "[]");
+        if (!Array.isArray(saved)) {
+          return [];
+        }
+        return saved.map((item, index) => ({
+          companyName: item.companyName || "",
+          deadline: item.deadline || "",
+          recruitPage: item.recruitPage || "",
+          loginId: item.loginId || "",
+          aptitudeTest: item.aptitudeTest || "",
+          firstInterview: item.firstInterview || "",
+          secondInterview: item.secondInterview || "",
+          createdAt: Date.now() + index
+        }));
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function normalizePrompt(prompt) {
+      if (!prompt || !prompt.title) {
+        return null;
+      }
+      return {
+        id: prompt.id || uniqueId("prompt"),
+        title: String(prompt.title),
+        limit: Number(prompt.limit) || 0
+      };
+    }
+
+    function updateStatus() {
+      statusNode.textContent = "最終保存 " + new Date().toLocaleTimeString("ja-JP", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function normalizeUrl(value) {
+      const trimmed = String(value || "").trim();
+      if (!trimmed) {
+        return "";
+      }
+      try {
+        const full = /^https?:\/\//i.test(trimmed) ? trimmed : "https://" + trimmed;
+        return new URL(full).href;
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function fit(textarea) {
+      textarea.style.height = "0px";
+      textarea.style.height = Math.max(textarea.scrollHeight, 82) + "px";
+    }
+
+    function isDateValue(value) {
+      return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
+    }
+
+    function startOfToday() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return today;
+    }
+
+    function formatDate(date) {
+      return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0");
+    }
+
+    function formatDateLabel(value) {
+      if (!isDateValue(value)) {
+        return "";
+      }
+      const [year, month, day] = value.split("-");
+      return year + "年" + month + "月" + day + "日";
+    }
+
+    function isSameDate(left, right) {
+      return left.getFullYear() === right.getFullYear()
+        && left.getMonth() === right.getMonth()
+        && left.getDate() === right.getDate();
+    }
+
+    function needsSixthCalendarRow(startDate, currentMonthIndex) {
+      const rowStart = new Date(startDate);
+      rowStart.setDate(startDate.getDate() + 35);
+      for (let offset = 0; offset < 7; offset += 1) {
+        const checkDate = new Date(rowStart);
+        checkDate.setDate(rowStart.getDate() + offset);
+        if (checkDate.getMonth() === currentMonthIndex) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function uniqueId(prefix) {
+      return prefix + "-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+    }
+
+    function promptById(id) {
+      return state.prompts.find((prompt) => prompt.id === id) || { id, title: "ES設問", limit: 0 };
+    }
+
+    function statePrompts() {
+      return state && Array.isArray(state.prompts) ? state.prompts : [];
+    }
+  </script>
+</body>
+</html>
