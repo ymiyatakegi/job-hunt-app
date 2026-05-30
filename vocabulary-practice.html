@@ -178,7 +178,7 @@
       session.current = session.queue.shift();
       const item = byNo.get(session.current);
       nodes.sourceText.textContent = item.source ? `${item.source} No.${item.no}` : `No.${item.no}`;
-      nodes.queueText.textContent = `未回答 ${WORDS.length - session.answered.size}`;
+      nodes.queueText.textContent = `未回答 ${remainingCount()}`;
       nodes.wordText.textContent = item.word;
       nodes.meaningText.textContent = item.meaning || "-";
       nodes.exampleText.textContent = item.example || "-";
@@ -226,7 +226,7 @@
       if (!session) session = { ok: 0, miss: 0, answered: new Set() };
       nodes.okCount.textContent = session.ok;
       nodes.missCount.textContent = session.miss;
-      nodes.unansweredCount.textContent = Math.max(0, WORDS.length - session.answered.size);
+      nodes.unansweredCount.textContent = remainingCount();
       nodes.resultNote.textContent = `復習中: ${progress.retry.length}語 / 1周の完了: ${progress.done.length}語 / 全${WORDS.length}語`;
       showView("resultView");
     }
@@ -247,14 +247,27 @@
     }
     function normalizeProgress(input) {
       const valid = new Set(WORDS.map((item) => item.no));
-      const words = input && input.words && typeof input.words === "object" ? input.words : {};
+      const rawWords = input && input.words && typeof input.words === "object" ? input.words : {};
+      const words = {};
+      for (const no of valid) {
+        const state = rawWords[no];
+        if (state && Number.isFinite(Number(state.streak))) words[no] = { streak: Math.max(0, Math.min(2, Number(state.streak))) };
+      }
+      const done = unique(Array.isArray(input && input.done) ? input.done : []).filter((no) => valid.has(no));
+      const doneSet = new Set(done);
+      const retry = unique(Array.isArray(input && input.retry) ? input.retry : []).filter((no) => {
+        if (!valid.has(no)) return false;
+        const streak = words[no] ? words[no].streak : 0;
+        return streak < 2 && !doneSet.has(no);
+      });
       return {
-        done: unique(Array.isArray(input && input.done) ? input.done : []).filter((no) => valid.has(no)),
-        retry: unique(Array.isArray(input && input.retry) ? input.retry : []).filter((no) => valid.has(no)),
+        done,
+        retry,
         words
       };
     }
     function saveProgress() { localStorage.setItem(STORE_KEY, JSON.stringify(progress)); }
+    function remainingCount() { return Math.max(0, WORDS.length - progress.done.length); }
     function unique(values) { return [...new Set(values.map(Number).filter(Number.isFinite))]; }
     function shuffle(values) {
       const next = values.slice();
