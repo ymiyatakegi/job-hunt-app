@@ -363,6 +363,22 @@
     .event-chip.is-test { background: #6d597a; }
     .event-chip.is-interview { background: #0f766e; }
     .empty-note { color: #94897a; font-size: 0.78rem; margin: 0; padding-top: 4px; }
+    .company-list-panel.is-hidden { display: none; }
+    .company-list-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 12px;
+    }
+    .company-list-head h2,
+    .company-list-head p { margin: 0; }
+    .company-list-head p { margin-top: 5px; color: var(--muted); }
+    .company-list-output {
+      min-height: 160px;
+      white-space: pre;
+      font-family: "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
+    }
 
     @media (max-width: 980px) {
       .app { padding: 18px; }
@@ -384,6 +400,7 @@
       </div>
       <div class="actions">
         <button id="addRow" class="primary" type="button">企業を追加</button>
+        <button id="showCompanyList" class="secondary" type="button">企業一覧を表示</button>
         <button id="resetAll" class="secondary" type="button">全消去</button>
       </div>
     </section>
@@ -416,6 +433,17 @@
           <tbody id="bodyRows"></tbody>
         </table>
       </div>
+    </section>
+
+    <section id="companyListPanel" class="panel company-list-panel is-hidden">
+      <div class="company-list-head">
+        <div>
+          <h2>企業一覧</h2>
+          <p id="companyListCount">0社</p>
+        </div>
+        <button id="downloadCompanyCsv" class="secondary" type="button">CSVをダウンロード</button>
+      </div>
+      <textarea id="companyListOutput" class="company-list-output" readonly></textarea>
     </section>
 
     <section class="panel">
@@ -522,8 +550,13 @@
     const headRow = document.getElementById("headRow");
     const bodyRows = document.getElementById("bodyRows");
     const addRowButton = document.getElementById("addRow");
+    const showCompanyListButton = document.getElementById("showCompanyList");
     const resetAllButton = document.getElementById("resetAll");
     const statusNode = document.getElementById("status");
+    const companyListPanel = document.getElementById("companyListPanel");
+    const companyListCount = document.getElementById("companyListCount");
+    const companyListOutput = document.getElementById("companyListOutput");
+    const downloadCompanyCsvButton = document.getElementById("downloadCompanyCsv");
     const companySearchInput = document.getElementById("companySearch");
     const favoriteOnlyInput = document.getElementById("favoriteOnly");
     const practiceOnlyInput = document.getElementById("practiceOnly");
@@ -574,6 +607,17 @@
       render();
       saveState();
     });
+
+    showCompanyListButton.addEventListener("click", () => {
+      const isHidden = companyListPanel.classList.toggle("is-hidden");
+      showCompanyListButton.textContent = isHidden ? "企業一覧を表示" : "企業一覧を隠す";
+      renderCompanyList();
+      if (!isHidden) {
+        companyListPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+
+    downloadCompanyCsvButton.addEventListener("click", downloadCompanyCsv);
 
     resetAllButton.addEventListener("click", () => {
       if (!window.confirm("入力済みの企業情報とES内容をすべて削除します。よろしいですか？")) {
@@ -642,6 +686,7 @@
     function render() {
       renderHead();
       renderRows();
+      renderCompanyList();
       renderCalendar();
     }
 
@@ -704,6 +749,54 @@
         tr.appendChild(actionTd);
         bodyRows.appendChild(tr);
       });
+      renderCompanyList();
+    }
+
+    function companyListRows() {
+      return state.rows
+        .map((row, index) => ({
+          no: index + 1,
+          companyName: String(row.companyName || "").trim(),
+          deadline: String(row.deadline || "").trim(),
+          state: statusMeta(row.state).label
+        }))
+        .filter((row) => row.companyName);
+    }
+
+    function renderCompanyList() {
+      if (!companyListOutput || !companyListCount) {
+        return;
+      }
+      const rows = companyListRows();
+      companyListCount.textContent = rows.length + "社";
+      companyListOutput.value = rows.length
+        ? rows.map((row) => row.no + ". " + row.companyName).join("\n")
+        : "入力済みの企業名はまだありません。";
+    }
+
+    function downloadCompanyCsv() {
+      const rows = companyListRows();
+      if (rows.length === 0) {
+        window.alert("入力済みの企業名がありません。");
+        return;
+      }
+      const header = ["No", "企業名", "ES締切", "状態"];
+      const csv = [header, ...rows.map((row) => [row.no, row.companyName, row.deadline, row.state])]
+        .map((row) => row.map(csvCell).join(","))
+        .join("\r\n");
+      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "company-list.csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function csvCell(value) {
+      return '"' + String(value || "").replace(/"/g, '""') + '"';
     }
 
     function createCell(row, rowIndex, column) {
