@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>頻出語句200 空欄練習</title>
+  <style>
+    :root {
+      --bg: #eef7f2;
+      --surface: #ffffff;
+      --surface-2: #f6fbf8;
+      --line: #bfd6ca;
+      --text: #111827;
+      --muted: #50645b;
+      --accent: #138a54;
+      --accent-2: #0b5f3a;
+      --danger: #b43b4f;
+      --ok: #d84315;
+      --shadow: 0 18px 38px rgba(31, 52, 65, 0.12);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      color: var(--text);
+      background: radial-gradient(circle at 8% 0%, rgba(19,138,84,.14), transparent 30%), radial-gradient(circle at 96% 4%, rgba(216,67,21,.10), transparent 24%), linear-gradient(180deg,#fbfefd 0%,var(--bg) 100%);
+      font-family: "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
+    }
+    button {
+      min-height: 44px;
+      cursor: pointer;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      background: #fff;
+      font: inherit;
+      font-weight: 800;
+    }
+    button:disabled { cursor: not-allowed; opacity: .55; }
+    .primary { color: #fff; background: var(--accent); border-color: var(--accent); }
+    .ghost { color: var(--accent-2); background: rgba(19,138,84,.08); border-color: rgba(19,138,84,.22); }
+    .ok { color: #fff; background: var(--ok); border-color: var(--ok); }
+    .miss { color: #fff; background: var(--danger); border-color: var(--danger); }
+    .danger { color: var(--danger); background: rgba(180,59,79,.08); border-color: rgba(180,59,79,.22); }
+    .app { width: min(100%, 760px); margin: 0 auto; padding: 14px; padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+    .topbar, .panel, .card { border: 1px solid rgba(191,214,202,.86); border-radius: 8px; background: rgba(255,255,255,.96); box-shadow: var(--shadow); }
+    .topbar { padding: 16px; margin-bottom: 12px; }
+    .eyebrow { margin: 0 0 6px; color: var(--accent); font-size: .78rem; font-weight: 900; letter-spacing: .08em; }
+    h1, h2, p { margin-top: 0; }
+    h1 { margin-bottom: 0; font-size: clamp(1.35rem, 7vw, 2rem); line-height: 1.2; }
+    h2 { margin-bottom: 10px; font-size: 1.06rem; }
+    .muted { color: var(--muted); }
+    .view { display: none; }
+    .view.is-active { display: block; }
+    .panel, .card { padding: 16px; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+    .stat { min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--surface-2); }
+    .stat span { display: block; color: var(--muted); font-size: .72rem; font-weight: 900; }
+    .stat strong { display: block; margin-top: 2px; font-size: 1.2rem; }
+    .actions { display: grid; gap: 10px; margin-top: 14px; }
+    .actions.two { grid-template-columns: 1fr 1fr; }
+    .meta { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: .86rem; font-weight: 800; }
+    .question { display: grid; place-items: center; min-height: 230px; margin: 14px 0; border: 1px solid var(--line); border-radius: 8px; background: #fff; text-align: left; }
+    .question strong { overflow-wrap: anywhere; width: 100%; padding: 18px; font-size: clamp(1.25rem, 5vw, 2rem); line-height: 1.65; white-space: pre-wrap; }
+    .answer { display: none; gap: 12px; margin-top: 12px; }
+    .answer.is-open { display: grid; }
+    .answer-box { border: 1px solid var(--line); border-radius: 8px; padding: 12px; background: #fff; }
+    .answer-box span { display: block; margin-bottom: 6px; color: var(--muted); font-size: .78rem; font-weight: 900; }
+    .answer-box p { margin: 0; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .judge { display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .judge.is-open { display: grid; }
+    .summary-list { display: grid; gap: 10px; margin: 14px 0; }
+    .summary-row { display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--line); border-radius: 8px; padding: 12px; background: #fff; font-weight: 900; }
+    .summary-row strong { font-size: 1.5rem; }
+    .small { font-size: .84rem; line-height: 1.7; }
+    @media (min-width: 560px) { .actions { grid-template-columns: 1fr 1fr; } .actions .wide { grid-column: 1 / -1; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <p class="eyebrow">PHRASES</p>
+      <h1>頻出語句200 空欄練習</h1>
+    </header>
+    <section id="setupView" class="view is-active">
+      <div class="panel">
+        <h2>スタート</h2>
+        <p class="muted small">空欄入りの文を見て、入る語句を思い出してから答えを表示します。判定すると進捗が保存されます。</p>
+        <div id="setupStats" class="stats"></div>
+        <div class="actions">
+          <button id="startBtn" class="primary" type="button">スタート</button>
+          <button id="resetBtn" class="danger" type="button">記録リセット</button>
+        </div>
+      </div>
+    </section>
+    <section id="quizView" class="view">
+      <div class="card">
+        <div class="meta"><span id="sourceText"></span><span id="queueText"></span></div>
+        <div class="question"><strong id="questionText"></strong></div>
+        <button id="showAnswerBtn" class="primary wide" type="button">答えを見る</button>
+        <div id="answerArea" class="answer">
+          <div class="answer-box"><span>答え</span><p id="answerText"></p></div>
+          </div>
+        <div id="judgeArea" class="judge">
+          <button id="missBtn" class="miss" type="button">×</button>
+          <button id="okBtn" class="ok" type="button">○</button>
+        </div>
+        <div class="actions two">
+          <button id="finishBtn" class="ghost" type="button">いったん終了</button>
+          <button id="skipBtn" type="button">あとで</button>
+        </div>
+      </div>
+    </section>
+    <section id="resultView" class="view">
+      <div class="panel">
+        <h2>今回の結果</h2>
+        <div class="summary-list">
+          <div class="summary-row"><span>○</span><strong id="okCount">0</strong></div>
+          <div class="summary-row"><span>×</span><strong id="missCount">0</strong></div>
+          <div class="summary-row"><span>未回答</span><strong id="unansweredCount">0</strong></div>
+        </div>
+        <p id="resultNote" class="muted small"></p>
+        <div class="actions">
+          <button id="restartBtn" class="primary" type="button">続きからスタート</button>
+          <button id="homeBtn" class="ghost" type="button">最初の画面へ</button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script>
+    const ITEMS = [{"no": 1, "source": "頻出語句200", "question": "🔲のある人", "answer": "識見"}, {"no": 2, "source": "頻出語句200", "question": "勝って🔲を下げる", "answer": "溜飲"}, {"no": 3, "source": "頻出語句200", "question": "2人の証言が🔲する", "answer": "符合"}, {"no": 4, "source": "頻出語句200", "question": "🔲の目を向ける", "answer": "猜疑"}, {"no": 5, "source": "頻出語句200", "question": "🔲をなめる", "answer": "辛酸"}, {"no": 6, "source": "頻出語句200", "question": "業界の裏側で🔲する", "answer": "暗躍"}, {"no": 7, "source": "頻出語句200", "question": "博覧🔲に驚かされる", "answer": "強記"}, {"no": 8, "source": "頻出語句200", "question": "派閥の🔲", "answer": "領袖"}, {"no": 9, "source": "頻出語句200", "question": "🔲の的", "answer": "垂涎"}, {"no": 10, "source": "頻出語句200", "question": "🔲に値する人物", "answer": "刮目"}, {"no": 11, "source": "頻出語句200", "question": "🔲な計画は失敗する", "answer": "粗雑"}, {"no": 12, "source": "頻出語句200", "question": "🔲の評論家", "answer": "気鋭"}, {"no": 13, "source": "頻出語句200", "question": "悪い噂が🔲する", "answer": "流布"}, {"no": 14, "source": "頻出語句200", "question": "師から🔲される", "answer": "激賞"}, {"no": 15, "source": "頻出語句200", "question": "師として🔲する", "answer": "心服"}, {"no": 16, "source": "頻出語句200", "question": "🔲して説明する", "answer": "敷衍"}, {"no": 17, "source": "頻出語句200", "question": "🔲の精神", "answer": "進取"}, {"no": 18, "source": "頻出語句200", "question": "🔲を述べる", "answer": "卓見"}, {"no": 19, "source": "頻出語句200", "question": "法案の作成に🔲する", "answer": "参画"}, {"no": 20, "source": "頻出語句200", "question": "🔲な記録をつける", "answer": "克明"}, {"no": 21, "source": "頻出語句200", "question": "三党が🔲を削る", "answer": "鎬"}, {"no": 22, "source": "頻出語句200", "question": "🔲協議をする", "answer": "鳩首"}, {"no": 23, "source": "頻出語句200", "question": "社会の🔲", "answer": "木鐸"}, {"no": 24, "source": "頻出語句200", "question": "🔲にこだわる男", "answer": "細事"}, {"no": 25, "source": "頻出語句200", "question": "🔲にかられる", "answer": "義憤"}, {"no": 26, "source": "頻出語句200", "question": "🔲を打ち破る", "answer": "因習"}, {"no": 27, "source": "頻出語句200", "question": "寛仁🔲", "answer": "大度"}, {"no": 28, "source": "頻出語句200", "question": "🔲に否定する", "answer": "言下"}, {"no": 29, "source": "頻出語句200", "question": "戯曲の🔲を話す", "answer": "梗概"}, {"no": 30, "source": "頻出語句200", "question": "🔲を極めた細工", "answer": "精緻"}, {"no": 31, "source": "頻出語句200", "question": "🔲に書き記す", "answer": "精細"}, {"no": 32, "source": "頻出語句200", "question": "悪鬼が🔲する", "answer": "跋扈"}, {"no": 33, "source": "頻出語句200", "question": "契約を🔲する", "answer": "履行"}, {"no": 34, "source": "頻出語句200", "question": "🔲としていられない", "answer": "安閑"}, {"no": 35, "source": "頻出語句200", "question": "漱石に🔲する", "answer": "私淑"}, {"no": 36, "source": "頻出語句200", "question": "🔲な趣味をもつ", "answer": "高尚"}, {"no": 37, "source": "頻出語句200", "question": "士気を🔲する", "answer": "鼓舞"}, {"no": 38, "source": "頻出語句200", "question": "🔲な受け答え", "answer": "即妙"}, {"no": 39, "source": "頻出語句200", "question": "🔲な理想を抱く", "answer": "崇高"}, {"no": 40, "source": "頻出語句200", "question": "官庁に🔲する", "answer": "出仕"}, {"no": 41, "source": "頻出語句200", "question": "🔲心をあおる", "answer": "射幸"}, {"no": 42, "source": "頻出語句200", "question": "汚職が🔲している", "answer": "蔓延"}, {"no": 43, "source": "頻出語句200", "question": "新社屋が🔲する", "answer": "落成"}, {"no": 44, "source": "頻出語句200", "question": "🔲ににおわせる", "answer": "言外"}, {"no": 45, "source": "頻出語句200", "question": "🔲した状態", "answer": "膠着"}, {"no": 46, "source": "頻出語句200", "question": "🔲をとる", "answer": "言質"}, {"no": 47, "source": "頻出語句200", "question": "🔲に供する", "answer": "縦覧"}, {"no": 48, "source": "頻出語句200", "question": "実現しようと🔲する", "answer": "画策"}, {"no": 49, "source": "頻出語句200", "question": "🔲に答える", "answer": "慇懃"}, {"no": 50, "source": "頻出語句200", "question": "🔲を確認する", "answer": "明細"}, {"no": 51, "source": "頻出語句200", "question": "🔲の士", "answer": "慧眼"}, {"no": 52, "source": "頻出語句200", "question": "自らの言動を🔲する", "answer": "省察"}, {"no": 53, "source": "頻出語句200", "question": "🔲をもらす", "answer": "嘆息"}, {"no": 54, "source": "頻出語句200", "question": "照明に🔲を凝らす", "answer": "意匠"}, {"no": 55, "source": "頻出語句200", "question": "時代の風潮に🔲する", "answer": "迎合"}, {"no": 56, "source": "頻出語句200", "question": "条件を🔲した立地", "answer": "具備"}, {"no": 57, "source": "頻出語句200", "question": "師の教えを🔲する", "answer": "銘記"}, {"no": 58, "source": "頻出語句200", "question": "🔲の思いで手放す", "answer": "断腸"}, {"no": 59, "source": "頻出語句200", "question": "神話に🔲して語る", "answer": "仮託"}, {"no": 60, "source": "頻出語句200", "question": "海外に🔲する", "answer": "雄飛"}, {"no": 61, "source": "頻出語句200", "question": "🔲前で忙しい", "answer": "晦日"}, {"no": 62, "source": "頻出語句200", "question": "相手に🔲する", "answer": "斟酌"}, {"no": 63, "source": "頻出語句200", "question": "真意を🔲する", "answer": "付度"}, {"no": 64, "source": "頻出語句200", "question": "世界の平和を🔲する", "answer": "庶幾"}, {"no": 65, "source": "頻出語句200", "question": "勢力が🔲する", "answer": "拮抗"}, {"no": 66, "source": "頻出語句200", "question": "🔲な衣装", "answer": "奇抜"}, {"no": 67, "source": "頻出語句200", "question": "部下を🔲する", "answer": "督励"}, {"no": 68, "source": "頻出語句200", "question": "🔲とした態度", "answer": "超然"}, {"no": 69, "source": "頻出語句200", "question": "🔲な工事", "answer": "杜撰"}, {"no": 70, "source": "頻出語句200", "question": "🔲の境地", "answer": "円熟"}, {"no": 71, "source": "頻出語句200", "question": "🔲した文章", "answer": "老成"}, {"no": 72, "source": "頻出語句200", "question": "🔲を弄する", "answer": "詭弁"}, {"no": 73, "source": "頻出語句200", "question": "けだし🔲といえよう", "answer": "至言"}, {"no": 74, "source": "頻出語句200", "question": "🔲対処する", "answer": "適宜"}, {"no": 75, "source": "頻出語句200", "question": "🔲な言い方ですが", "answer": "僭越"}, {"no": 76, "source": "頻出語句200", "question": "君の🔲に任せる", "answer": "裁量"}, {"no": 77, "source": "頻出語句200", "question": "戦う🔲を示す", "answer": "気概"}, {"no": 78, "source": "頻出語句200", "question": "意見が🔲された", "answer": "笑殺"}, {"no": 79, "source": "頻出語句200", "question": "🔲な出来事", "answer": "希有"}, {"no": 80, "source": "頻出語句200", "question": "人格を🔲する", "answer": "陶冶"}, {"no": 81, "source": "頻出語句200", "question": "🔲する間に機会を逃す", "answer": "逡巡"}, {"no": 82, "source": "頻出語句200", "question": "景気回復の🔲である", "answer": "証左"}, {"no": 83, "source": "頻出語句200", "question": "🔲に振る舞う", "answer": "気丈"}, {"no": 84, "source": "頻出語句200", "question": "🔲政権を取るだろう", "answer": "早晩"}, {"no": 85, "source": "頻出語句200", "question": "座敷に🔲を呼ぶ", "answer": "幇間"}, {"no": 86, "source": "頻出語句200", "question": "🔲する", "answer": "暁通"}, {"no": 87, "source": "頻出語句200", "question": "🔲な手段", "answer": "姑息"}, {"no": 88, "source": "頻出語句200", "question": "🔲と仕事に励む", "answer": "営営"}, {"no": 89, "source": "頻出語句200", "question": "名利に🔲な人物", "answer": "恬淡"}, {"no": 90, "source": "頻出語句200", "question": "自由🔲な社風", "answer": "闊達"}, {"no": 91, "source": "頻出語句200", "question": "反例をあげて🔲する", "answer": "論駁"}, {"no": 92, "source": "頻出語句200", "question": "🔲した技術", "answer": "卓越"}, {"no": 93, "source": "頻出語句200", "question": "徳性の🔲を図る", "answer": "涵養"}, {"no": 94, "source": "頻出語句200", "question": "文化が東へと🔲する", "answer": "伝播"}, {"no": 95, "source": "頻出語句200", "question": "🔲と星が輝く", "answer": "煌煌"}, {"no": 96, "source": "頻出語句200", "question": "情報元を🔲する", "answer": "秘匿"}, {"no": 97, "source": "頻出語句200", "question": "🔲にふける", "answer": "奢侈"}, {"no": 98, "source": "頻出語句200", "question": "🔲にすぎない", "answer": "杞憂"}, {"no": 99, "source": "頻出語句200", "question": "🔲と意見を述べる", "answer": "滔滔"}, {"no": 100, "source": "頻出語句200", "question": "🔲と続く山並み", "answer": "蜿蜒"}, {"no": 101, "source": "頻出語句200", "question": "意思の🔲を図る", "answer": "疎通"}, {"no": 102, "source": "頻出語句200", "question": "思うところを🔲する", "answer": "直言"}, {"no": 103, "source": "頻出語句200", "question": "社長に🔲する", "answer": "具申"}, {"no": 104, "source": "頻出語句200", "question": "文章を🔲する", "answer": "咀嚼"}, {"no": 105, "source": "頻出語句200", "question": "🔲とした事実", "answer": "歴然"}, {"no": 106, "source": "頻出語句200", "question": "🔲の意を表する", "answer": "恭順"}, {"no": 107, "source": "頻出語句200", "question": "計画の🔲", "answer": "大綱"}, {"no": 108, "source": "頻出語句200", "question": "事業が🔲する", "answer": "蹉跌"}, {"no": 109, "source": "頻出語句200", "question": "収穫量の🔲", "answer": "逓減"}, {"no": 110, "source": "頻出語句200", "question": "🔲作家", "answer": "閨秀"}, {"no": 111, "source": "頻出語句200", "question": "🔲を突く", "answer": "意表"}, {"no": 112, "source": "頻出語句200", "question": "🔲が生じる", "answer": "軋轢"}, {"no": 113, "source": "頻出語句200", "question": "🔲をねぎらう", "answer": "労苦"}, {"no": 114, "source": "頻出語句200", "question": "🔲を脚注に示す", "answer": "典拠"}, {"no": 115, "source": "頻出語句200", "question": "国の🔲にいる", "answer": "枢要"}, {"no": 116, "source": "頻出語句200", "question": "美術界の🔲", "answer": "泰斗"}, {"no": 117, "source": "頻出語句200", "question": "兄に🔲する", "answer": "比肩"}, {"no": 118, "source": "頻出語句200", "question": "創作に🔲する", "answer": "傾注"}, {"no": 119, "source": "頻出語句200", "question": "🔲事項", "answer": "懸案"}, {"no": 120, "source": "頻出語句200", "question": "🔲政策", "answer": "宥和"}, {"no": 121, "source": "頻出語句200", "question": "敵から🔲する", "answer": "逃走"}, {"no": 122, "source": "頻出語句200", "question": "人の話を🔲に聴く", "answer": "虚心"}, {"no": 123, "source": "頻出語句200", "question": "🔲を制する", "answer": "中原"}, {"no": 124, "source": "頻出語句200", "question": "定理から🔲する", "answer": "演繹"}, {"no": 125, "source": "頻出語句200", "question": "🔲を得る", "answer": "知遇"}, {"no": 126, "source": "頻出語句200", "question": "発言が🔲を買った", "answer": "失笑"}, {"no": 127, "source": "頻出語句200", "question": "🔲の権威", "answer": "斯界"}, {"no": 128, "source": "頻出語句200", "question": "小説を🔲する", "answer": "耽読"}, {"no": 129, "source": "頻出語句200", "question": "計画を🔲と進める", "answer": "着々"}, {"no": 130, "source": "頻出語句200", "question": "事の🔲を述べる", "answer": "子細"}, {"no": 131, "source": "頻出語句200", "question": "🔲の事情により", "answer": "這般"}, {"no": 132, "source": "頻出語句200", "question": "話が🔲に入る", "answer": "佳境"}, {"no": 133, "source": "頻出語句200", "question": "🔲を通ずる", "answer": "気脈"}, {"no": 134, "source": "頻出語句200", "question": "部下を🔲させるな", "answer": "増長"}, {"no": 135, "source": "頻出語句200", "question": "東西貿易の🔲", "answer": "咽喉"}, {"no": 136, "source": "頻出語句200", "question": "昨年を🔲する", "answer": "回視"}, {"no": 137, "source": "頻出語句200", "question": "🔲できない大問題", "answer": "看過"}, {"no": 138, "source": "頻出語句200", "question": "悪巧みを🔲する", "answer": "看破"}, {"no": 139, "source": "頻出語句200", "question": "相手の意向を🔲する", "answer": "打診"}, {"no": 140, "source": "頻出語句200", "question": "民主主義を🔲する", "answer": "標榜"}, {"no": 141, "source": "頻出語句200", "question": "異民族を🔲する", "answer": "排斥"}, {"no": 142, "source": "頻出語句200", "question": "公私を🔲する", "answer": "峻別"}, {"no": 143, "source": "頻出語句200", "question": "手柄を🔲する", "answer": "吹聴"}, {"no": 144, "source": "頻出語句200", "question": "🔲にして存じません", "answer": "寡聞"}, {"no": 145, "source": "頻出語句200", "question": "人間辛抱が🔲だ", "answer": "肝要"}, {"no": 146, "source": "頻出語句200", "question": "文明の🔲", "answer": "消長"}, {"no": 147, "source": "頻出語句200", "question": "🔲ない出来映え", "answer": "遜色"}, {"no": 148, "source": "頻出語句200", "question": "🔲な例を挙げる", "answer": "卑近"}, {"no": 149, "source": "頻出語句200", "question": "人気取りに🔲する", "answer": "腐心"}, {"no": 150, "source": "頻出語句200", "question": "武器を🔲に調達する", "answer": "内内"}, {"no": 151, "source": "頻出語句200", "question": "🔲の情を抱く", "answer": "憐憫"}, {"no": 152, "source": "頻出語句200", "question": "歌舞伎に🔲が深い", "answer": "造詣"}, {"no": 153, "source": "頻出語句200", "question": "あまりの暑さに🔲する", "answer": "閉口"}, {"no": 154, "source": "頻出語句200", "question": "部下の失敗を🔲にみる", "answer": "大目"}, {"no": 155, "source": "頻出語句200", "question": "🔲増加する", "answer": "漸次"}, {"no": 156, "source": "頻出語句200", "question": "🔲的な改革", "answer": "漸進"}, {"no": 157, "source": "頻出語句200", "question": "オリンピックを🔲する", "answer": "招致"}, {"no": 158, "source": "頻出語句200", "question": "🔲かまわずに", "answer": "委細"}, {"no": 159, "source": "頻出語句200", "question": "🔲を養う", "answer": "英気"}, {"no": 160, "source": "頻出語句200", "question": "🔲の人", "answer": "市井"}, {"no": 161, "source": "頻出語句200", "question": "本心を🔲する", "answer": "披瀝"}, {"no": 162, "source": "頻出語句200", "question": "正体が🔲する", "answer": "露呈"}, {"no": 163, "source": "頻出語句200", "question": "🔲を正す", "answer": "謬見"}, {"no": 164, "source": "頻出語句200", "question": "🔲の出来映え", "answer": "出色"}, {"no": 165, "source": "頻出語句200", "question": "🔲を放つ", "answer": "異彩"}, {"no": 166, "source": "頻出語句200", "question": "両者の案を🔲する", "answer": "折衷"}, {"no": 167, "source": "頻出語句200", "question": "金を🔲する", "answer": "折半"}, {"no": 168, "source": "頻出語句200", "question": "遺族の心中を🔲する", "answer": "推察"}, {"no": 169, "source": "頻出語句200", "question": "パンデミックを🔲する", "answer": "予見"}, {"no": 170, "source": "頻出語句200", "question": "🔲の念をもつ", "answer": "畏敬"}, {"no": 171, "source": "頻出語句200", "question": "🔲を積む", "answer": "研鑽"}, {"no": 172, "source": "頻出語句200", "question": "解散は🔲である", "answer": "必至"}, {"no": 173, "source": "頻出語句200", "question": "上役の🔲にふれる", "answer": "逆鱗"}, {"no": 174, "source": "頻出語句200", "question": "🔲した情勢", "answer": "緊迫"}, {"no": 175, "source": "頻出語句200", "question": "🔲に恵まれる", "answer": "僥倖"}, {"no": 176, "source": "頻出語句200", "question": "🔲を切り開く", "answer": "隘路"}, {"no": 177, "source": "頻出語句200", "question": "🔲を開く", "answer": "愁眉"}, {"no": 178, "source": "頻出語句200", "question": "🔲の急", "answer": "焦眉"}, {"no": 179, "source": "頻出語句200", "question": "部下を🔲する", "answer": "一瞥"}, {"no": 180, "source": "頻出語句200", "question": "師の🔲を受ける", "answer": "薫陶"}, {"no": 181, "source": "頻出語句200", "question": "ご🔲にどうぞ", "answer": "随意"}, {"no": 182, "source": "頻出語句200", "question": "🔲的な解釈", "answer": "恣意"}, {"no": 183, "source": "頻出語句200", "question": "家庭の🔲を逃れる", "answer": "桎梏"}, {"no": 184, "source": "頻出語句200", "question": "軽妙🔲な文章", "answer": "洒脱"}, {"no": 185, "source": "頻出語句200", "question": "意見が🔲される", "answer": "収斂"}, {"no": 186, "source": "頻出語句200", "question": "運河を🔲する", "answer": "浚渫"}, {"no": 187, "source": "頻出語句200", "question": "🔲の事情により", "answer": "諸般"}, {"no": 188, "source": "頻出語句200", "question": "🔲な振る舞い", "answer": "粗忽"}, {"no": 189, "source": "頻出語句200", "question": "🔲が生じる", "answer": "齟齬"}, {"no": 190, "source": "頻出語句200", "question": "方針について🔲する", "answer": "詮議"}, {"no": 191, "source": "頻出語句200", "question": "失敗を🔲する", "answer": "糊塗"}, {"no": 192, "source": "頻出語句200", "question": "官庁に🔲する", "answer": "奉職"}, {"no": 193, "source": "頻出語句200", "question": "敵対勢力を🔲する", "answer": "懐柔"}, {"no": 194, "source": "頻出語句200", "question": "甘い言葉で🔲する", "answer": "籠絡"}, {"no": 195, "source": "頻出語句200", "question": "御無事で何より🔲", "answer": "重畳"}, {"no": 196, "source": "頻出語句200", "question": "解決の🔲を開く", "answer": "端緒"}, {"no": 197, "source": "頻出語句200", "question": "先例に🔲する", "answer": "依拠"}, {"no": 198, "source": "頻出語句200", "question": "計画が🔲する", "answer": "頓挫"}, {"no": 199, "source": "頻出語句200", "question": "🔲な形相におびえる", "answer": "獰悪"}, {"no": 200, "source": "頻出語句200", "question": "🔲を立てる", "answer": "角"}];
+    const STORE_KEY = "frequent-phrases-practice-v1";
+    const byNo = new Map(ITEMS.map((item) => [item.no, item]));
+    let progress = loadProgress();
+    let session = null;
+    const nodes = {
+      setupView: document.getElementById("setupView"), quizView: document.getElementById("quizView"), resultView: document.getElementById("resultView"),
+      setupStats: document.getElementById("setupStats"), startBtn: document.getElementById("startBtn"), resetBtn: document.getElementById("resetBtn"),
+      sourceText: document.getElementById("sourceText"), queueText: document.getElementById("queueText"), questionText: document.getElementById("questionText"),
+      showAnswerBtn: document.getElementById("showAnswerBtn"), answerArea: document.getElementById("answerArea"), answerText: document.getElementById("answerText"),
+      judgeArea: document.getElementById("judgeArea"), missBtn: document.getElementById("missBtn"), okBtn: document.getElementById("okBtn"), finishBtn: document.getElementById("finishBtn"), skipBtn: document.getElementById("skipBtn"),
+      okCount: document.getElementById("okCount"), missCount: document.getElementById("missCount"), unansweredCount: document.getElementById("unansweredCount"), resultNote: document.getElementById("resultNote"),
+      restartBtn: document.getElementById("restartBtn"), homeBtn: document.getElementById("homeBtn")
+    };
+    nodes.startBtn.addEventListener("click", startSession);
+    nodes.restartBtn.addEventListener("click", startSession);
+    nodes.homeBtn.addEventListener("click", () => showView("setupView"));
+    nodes.showAnswerBtn.addEventListener("click", revealAnswer);
+    nodes.okBtn.addEventListener("click", () => judge(true));
+    nodes.missBtn.addEventListener("click", () => judge(false));
+    nodes.finishBtn.addEventListener("click", finishSession);
+    nodes.skipBtn.addEventListener("click", skipCurrent);
+    nodes.resetBtn.addEventListener("click", resetProgress);
+    renderSetup();
+    function startSession() {
+      if (progress.done.length >= ITEMS.length && progress.retry.length === 0) progress.done = [];
+      session = { ok: 0, miss: 0, answered: new Set(), current: null, queue: buildQueue() };
+      showView("quizView");
+      nextQuestion();
+    }
+    function buildQueue() {
+      const retry = progress.retry.filter((no) => byNo.has(no));
+      const priorityRetry = shuffle(retry.filter((no) => (progress.items[no] && progress.items[no].streak) !== 1));
+      const normalRetry = retry.filter((no) => progress.items[no] && progress.items[no].streak === 1);
+      const done = new Set(progress.done);
+      const retrySet = new Set(retry);
+      const fresh = shuffle(ITEMS.map((item) => item.no).filter((no) => !done.has(no) && !retrySet.has(no)));
+      return priorityRetry.concat(shuffle(normalRetry.concat(fresh)));
+    }
+    function nextQuestion() {
+      if (!session.queue.length) {
+        if (progress.done.length >= ITEMS.length && progress.retry.length === 0) progress.done = [];
+        return finishSession();
+      }
+      session.current = session.queue.shift();
+      const item = byNo.get(session.current);
+      nodes.sourceText.textContent = item.source ? `${item.source} No.${item.no}` : `No.${item.no}`;
+      nodes.queueText.textContent = `未回答 ${remainingCount()}`;
+      nodes.questionText.textContent = item.question;
+      nodes.answerText.textContent = item.answer || "-";
+      nodes.answerArea.classList.remove("is-open");
+      nodes.judgeArea.classList.remove("is-open");
+      nodes.showAnswerBtn.disabled = false;
+    }
+    function revealAnswer() {
+      nodes.answerArea.classList.add("is-open");
+      nodes.judgeArea.classList.add("is-open");
+      nodes.showAnswerBtn.disabled = true;
+    }
+    function judge(isOk) {
+      const no = session.current;
+      const state = progress.items[no] || { streak: 0 };
+      session.answered.add(no);
+      removeFromQueue(no);
+      if (isOk) {
+        session.ok += 1;
+        state.streak = Math.min(2, (state.streak || 0) + 1);
+        if (!progress.retry.includes(no) || state.streak >= 2) {
+          progress.retry = progress.retry.filter((item) => item !== no);
+          progress.done = unique(progress.done.concat(no));
+        }
+      } else {
+        session.miss += 1;
+        state.streak = 0;
+        progress.done = progress.done.filter((item) => item !== no);
+        progress.retry = unique(progress.retry.concat(no));
+      }
+      progress.items[no] = state;
+      saveProgress();
+      renderSetup();
+      nextQuestion();
+    }
+    function removeFromQueue(no) {
+      if (!session || !session.queue) return;
+      session.queue = session.queue.filter((item) => item !== no);
+    }
+    function skipCurrent() {
+      if (session && session.current) session.queue.push(session.current);
+      nextQuestion();
+    }
+    function finishSession() {
+      const answered = session ? session.answered.size : 0;
+      const unanswered = Math.max(0, ITEMS.length - progress.done.length - progress.retry.length);
+      nodes.okCount.textContent = session ? session.ok : 0;
+      nodes.missCount.textContent = session ? session.miss : 0;
+      nodes.unansweredCount.textContent = unanswered;
+      nodes.resultNote.textContent = answered ? `${answered}問回答しました。間違えた問題は次回優先して出ます。` : "まだ回答していません。";
+      showView("resultView");
+    }
+    function renderSetup() {
+      const done = progress.done.filter((no) => byNo.has(no)).length;
+      const retry = progress.retry.filter((no) => byNo.has(no)).length;
+      const fresh = Math.max(0, ITEMS.length - done - retry);
+      nodes.setupStats.innerHTML = `
+        <div class="stat"><span>完了</span><strong>${done}</strong></div>
+        <div class="stat"><span>復習</span><strong>${retry}</strong></div>
+        <div class="stat"><span>未回答</span><strong>${fresh}</strong></div>`;
+    }
+    function remainingCount() {
+      return session ? session.queue.length + 1 : 0;
+    }
+    function showView(name) {
+      ["setupView", "quizView", "resultView"].forEach((key) => nodes[key].classList.toggle("is-active", key === name));
+      if (name === "setupView") renderSetup();
+    }
+    function resetProgress() {
+      if (!confirm("保存した進捗をリセットしますか？")) return;
+      progress = defaultProgress();
+      saveProgress();
+      renderSetup();
+    }
+    function loadProgress() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(STORE_KEY));
+        if (parsed && Array.isArray(parsed.done) && Array.isArray(parsed.retry) && parsed.items) return parsed;
+      } catch (error) {}
+      return defaultProgress();
+    }
+    function defaultProgress() {
+      return { done: [], retry: [], items: {} };
+    }
+    function saveProgress() {
+      localStorage.setItem(STORE_KEY, JSON.stringify(progress));
+    }
+    function unique(values) {
+      return Array.from(new Set(values));
+    }
+    function shuffle(values) {
+      const copy = values.slice();
+      for (let index = copy.length - 1; index > 0; index -= 1) {
+        const target = Math.floor(Math.random() * (index + 1));
+        [copy[index], copy[target]] = [copy[target], copy[index]];
+      }
+      return copy;
+    }
+  </script>
+</body>
+</html>
