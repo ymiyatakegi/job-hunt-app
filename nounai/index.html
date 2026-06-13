@@ -265,6 +265,64 @@
       line-height: 1.68;
     }
 
+    .prompt-builder {
+      display: grid;
+      gap: 14px;
+      max-width: 1040px;
+      margin: 0 auto 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: var(--panel);
+      box-shadow: 0 8px 24px rgba(23, 32, 51, 0.06);
+    }
+
+    .prompt-builder-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .prompt-builder-head h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .prompt-blocks {
+      display: grid;
+      gap: 12px;
+    }
+
+    .prompt-block {
+      display: grid;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcff;
+    }
+
+    .prompt-block-tools {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .prompt-separator {
+      height: 1px;
+      background: var(--line);
+      margin: 2px 0;
+    }
+
+    .prompt-output {
+      min-height: 220px;
+      resize: vertical;
+      white-space: pre-wrap;
+      line-height: 1.65;
+    }
+
     .title-row {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
@@ -474,13 +532,33 @@
           <div class="status" id="currentMeta">保存先: このブラウザ</div>
         </div>
         <div class="topbar-actions">
-          <button class="primary" id="apiProcess">API処理</button>
+          <button class="primary" id="promptBuilderOpen">プロンプト作成</button>
           <div class="status" id="saveStatus">自動保存</div>
         </div>
       </header>
 
       <div class="editor-wrap">
-        <section class="api-result" id="apiResult" hidden></section>
+        <section class="prompt-builder" id="promptBuilder" hidden>
+          <div class="prompt-builder-head">
+            <h2>プロンプト作成</h2>
+            <div class="actions">
+              <button class="secondary" id="promptShowAll">全体を表示</button>
+              <button class="secondary" id="promptBuilderClose">閉じる</button>
+            </div>
+          </div>
+
+          <div class="prompt-blocks" id="promptBlocks"></div>
+          <button class="secondary" id="promptExtend">＋プロンプトを延長</button>
+
+          <div class="field" id="promptOutputWrap" hidden>
+            <label for="promptOutput">全体</label>
+            <textarea class="prompt-output" id="promptOutput" readonly></textarea>
+            <div class="actions">
+              <button class="copy" id="promptCopy">そのままコピー</button>
+              <button class="secondary" id="promptDownload">txt保存</button>
+            </div>
+          </div>
+        </section>
 
         <section class="editor-empty" id="emptyState">
           <div>左の「新規メモ」から作成できます。</div>
@@ -556,6 +634,7 @@
     const $ = (id) => document.getElementById(id);
     const state = loadState();
     let activeId = state.memos[0]?.id || null;
+    let promptParts = [];
     let saveTimer = null;
 
     const fields = {
@@ -586,9 +665,17 @@
       lineCount: $("lineCount"),
       updateCount: $("updateCount"),
       commitUpdate: $("commitUpdate"),
-      apiProcess: $("apiProcess"),
-      apiResult: $("apiResult"),
-      toast: $("toast"),
+      promptBuilderOpen: $("promptBuilderOpen"),
+      promptBuilderClose: $("promptBuilderClose"),
+      promptBuilder: $("promptBuilder"),
+      promptBlocks: $("promptBlocks"),
+      promptExtend: $("promptExtend"),
+      promptShowAll: $("promptShowAll"),
+      promptCopy: $("promptCopy"),
+      promptDownload: $("promptDownload"),
+      promptOutputWrap: $("promptOutputWrap"),
+      promptOutput: $("promptOutput"),
+      toast: $("toast")
     };
 
     function uid(prefix) {
@@ -861,41 +948,209 @@
       copyText(memo.body, "文面をそのままコピーしました");
     }
 
-    async function processSiteWithApi() {
-      if (!state.memos.length) {
-        showToast("送信するメモがありません");
+    function openPromptBuilder() {
+      fields.promptBuilder.hidden = !fields.promptBuilder.hidden;
+      if (!fields.promptBuilder.hidden && !promptParts.length) {
+        addPromptPart();
+      }
+    }
+
+    function closePromptBuilder() {
+      fields.promptBuilder.hidden = true;
+    }
+
+    function addPromptPart() {
+      promptParts.push({ id: uid("part"), type: "", memoId: "", text: "" });
+      renderPromptBuilder();
+    }
+
+    function renderPromptBuilder() {
+      fields.promptBlocks.innerHTML = promptParts.map((part, index) => {
+        const separator = index < promptParts.length - 1 ? `<div class="prompt-separator"></div>` : "";
+        return `
+          <div class="prompt-block" data-part-id="${escapeAttr(part.id)}">
+            <div class="prompt-block-tools">
+              <button class="secondary" data-action="memo">＋メモを挿入</button>
+              <button class="secondary" data-action="text">＋テキストを記入</button>
+              <button class="danger" data-action="remove">削除</button>
+            </div>
+            ${renderPromptPartInput(part)}
+          </div>
+          ${separator}
+        `;
+      }).join("");
+    }
+
+    function renderPromptPartInput(part) {
+      if (part.type === "memo") {
+        const options = state.memos.map((memo) => {
+          const selected = memo.id === part.memoId ? "selected" : "";
+          return `<option value="${escapeAttr(memo.id)}" ${selected}>${escapeHtml(memo.title || "無題メモ")}</option>`;
+        }).join("");
+        return `
+          <div class="field">
+            <label>挿入するメモ</label>
+            <select data-action="selectMemo">
+              <option value="">メモを選択</option>
+              ${options}
+            </select>
+          </div>
+        `;
+      }
+      if (part.type === "text") {
+        return `
+          <div class="field">
+            <label>テキストを記入</label>
+            <textarea data-action="editText" placeholder="ここに追加したい文章を書いてください">${escapeHtml(part.text)}</textarea>
+          </div>
+        `;
+      }
+      return `<div class="status">追加したい内容を選んでください。</div>`;
+    }
+
+    function buildPromptText() {
+      return promptParts.map((part) => {
+        if (part.type === "memo") {
+          const memo = state.memos.find((item) => item.id === part.memoId);
+          if (!memo) return "";
+          return `${memo.title || "無題メモ"}\n「${memo.body || ""}」`;
+        }
+        if (part.type === "text") {
+          return part.text.trim();
+        }
+        return "";
+      }).filter(Boolean).join("\n\n");
+    }
+
+    function showPromptOutput() {
+      const text = buildPromptText();
+      if (!text) {
+        showToast("表示する内容がありません");
         return;
       }
-      fields.apiProcess.disabled = true;
-      fields.apiProcess.textContent = "処理中";
-      fields.apiResult.hidden = false;
-      fields.apiResult.textContent = "ChatGPT APIへサイト内メモを送信しています。";
-      try {
-        const response = await fetch("/api/agent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            query: "このサイトに保存されているメモ全体を読み取り、重要な内容、使えそうなプロンプト、整理すべき点を日本語でまとめてください。",
-            activeMemo: activeMemo(),
-            memos: state.memos.map((memo) => ({
-              title: memo.title,
-              description: memo.description,
-              body: memo.body,
-              category: categoryById(memo.categoryId).name,
-              updatedAt: memo.updatedAt,
-              updateCount: memo.updateCount
-            }))
-          })
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "API処理に失敗しました");
-        fields.apiResult.textContent = data.result || "結果が空でした。";
-      } catch (error) {
-        fields.apiResult.textContent = `${error.message}\n\nAPI処理を使う場合は server.js から起動して、http://localhost:8787 を開いてください。`;
-      } finally {
-        fields.apiProcess.disabled = false;
-        fields.apiProcess.textContent = "API処理";
+      const outputWindow = window.open("", "promptOutputWindow", "width=900,height=720");
+      if (outputWindow) {
+        renderPromptWindow(outputWindow, text);
+        return;
       }
+      fields.promptOutputWrap.hidden = false;
+      fields.promptOutput.value = text;
+      fields.promptOutput.focus();
+      showToast("別ウィンドウが開けなかったため、画面内に表示しました");
+    }
+
+    function renderPromptWindow(outputWindow, text) {
+      const doc = outputWindow.document;
+      doc.title = "作成プロンプト";
+      doc.documentElement.lang = "ja";
+      doc.head.innerHTML = "";
+      doc.body.innerHTML = "";
+
+      const metaCharset = doc.createElement("meta");
+      metaCharset.setAttribute("charset", "utf-8");
+      const metaViewport = doc.createElement("meta");
+      metaViewport.setAttribute("name", "viewport");
+      metaViewport.setAttribute("content", "width=device-width, initial-scale=1");
+      doc.head.append(metaCharset, metaViewport);
+
+      const style = doc.createElement("style");
+      style.textContent = `
+        * { box-sizing: border-box; }
+        body {
+          margin: 0;
+          padding: 22px;
+          background: #f5f7fb;
+          color: #172033;
+          font-family: "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+        }
+        header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          flex-wrap: wrap;
+          margin-bottom: 14px;
+        }
+        h1 { margin: 0; font-size: 22px; }
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        button {
+          border: 1px solid #dce2eb;
+          border-radius: 8px;
+          padding: 10px 14px;
+          background: #fff;
+          color: #172033;
+          font: inherit;
+          font-weight: 700;
+          cursor: pointer;
+        }
+        .copy { border: 0; background: #101828; color: #fff; }
+        textarea {
+          width: 100%;
+          min-height: calc(100vh - 105px);
+          border: 1px solid #dce2eb;
+          border-radius: 8px;
+          padding: 16px;
+          background: #fff;
+          color: #172033;
+          font: 16px/1.7 "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+          resize: vertical;
+          white-space: pre-wrap;
+        }
+      `;
+      doc.head.appendChild(style);
+
+      const header = doc.createElement("header");
+      const title = doc.createElement("h1");
+      title.textContent = "作成プロンプト";
+      const actions = doc.createElement("div");
+      actions.className = "actions";
+      const copyButton = doc.createElement("button");
+      copyButton.className = "copy";
+      copyButton.textContent = "そのままコピー";
+      const downloadButton = doc.createElement("button");
+      downloadButton.textContent = "txt保存";
+      const closeButton = doc.createElement("button");
+      closeButton.textContent = "閉じる";
+      actions.append(copyButton, downloadButton, closeButton);
+      header.append(title, actions);
+
+      const textarea = doc.createElement("textarea");
+      textarea.readOnly = true;
+      textarea.value = text;
+      doc.body.append(header, textarea);
+
+      copyButton.addEventListener("click", async () => {
+        await outputWindow.navigator.clipboard.writeText(text);
+        copyButton.textContent = "コピー済み";
+      });
+      downloadButton.addEventListener("click", () => {
+        downloadText(text);
+      });
+      closeButton.addEventListener("click", () => {
+        outputWindow.close();
+      });
+      textarea.focus();
+    }
+
+    function downloadPromptText() {
+      const text = fields.promptOutput.value || buildPromptText();
+      if (!text) {
+        showToast("保存する内容がありません");
+        return;
+      }
+      downloadText(text);
+    }
+
+    function downloadText(text) {
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `prompt-${new Date().toISOString().slice(0, 10)}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
     }
 
     function showToast(message) {
@@ -929,7 +1184,49 @@
       if (!fields.filterCategoryAdd.hidden) fields.filterCategoryName.focus();
     });
     $("addFilterCategory").addEventListener("click", addFilterCategory);
-    $("apiProcess").addEventListener("click", processSiteWithApi);
+    $("promptBuilderOpen").addEventListener("click", openPromptBuilder);
+    $("promptBuilderClose").addEventListener("click", closePromptBuilder);
+    $("promptExtend").addEventListener("click", addPromptPart);
+    $("promptShowAll").addEventListener("click", showPromptOutput);
+    $("promptCopy").addEventListener("click", () => copyText(fields.promptOutput.value || buildPromptText(), "プロンプトをコピーしました"));
+    $("promptDownload").addEventListener("click", downloadPromptText);
+
+    fields.promptBlocks.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      const block = button.closest("[data-part-id]");
+      const part = promptParts.find((item) => item.id === block.dataset.partId);
+      if (!part) return;
+      if (button.dataset.action === "memo") {
+        part.type = "memo";
+        part.memoId = activeId || "";
+      }
+      if (button.dataset.action === "text") {
+        part.type = "text";
+      }
+      if (button.dataset.action === "remove") {
+        promptParts = promptParts.filter((item) => item.id !== part.id);
+      }
+      renderPromptBuilder();
+    });
+
+    fields.promptBlocks.addEventListener("change", (event) => {
+      const target = event.target.closest("[data-action='selectMemo']");
+      if (!target) return;
+      const block = target.closest("[data-part-id]");
+      const part = promptParts.find((item) => item.id === block.dataset.partId);
+      if (!part) return;
+      part.memoId = target.value;
+    });
+
+    fields.promptBlocks.addEventListener("input", (event) => {
+      const target = event.target.closest("[data-action='editText']");
+      if (!target) return;
+      const block = target.closest("[data-part-id]");
+      const part = promptParts.find((item) => item.id === block.dataset.partId);
+      if (!part) return;
+      part.text = target.value;
+    });
 
     fields.memoList.addEventListener("click", (event) => {
       const button = event.target.closest("[data-id]");
