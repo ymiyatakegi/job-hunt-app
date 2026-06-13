@@ -16,6 +16,7 @@
       --danger: #c93636;
       --shadow: 0 16px 40px rgba(23, 32, 51, 0.10);
       --note-color: #d9e8ff;
+      --sidebar-width: 360px;
     }
 
     * { box-sizing: border-box; }
@@ -44,7 +45,7 @@
 
     .app {
       display: grid;
-      grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+      grid-template-columns: var(--sidebar-width) 12px minmax(0, 1fr);
       height: 100vh;
       overflow: hidden;
     }
@@ -58,6 +59,32 @@
       background: #eef2f8;
       min-height: 0;
       overflow: hidden;
+    }
+
+    .resizer {
+      position: relative;
+      border-right: 1px solid var(--line);
+      border-left: 1px solid rgba(255, 255, 255, 0.6);
+      background: #dfe7f2;
+      cursor: col-resize;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .resizer::before {
+      content: "↔";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(90deg);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .resizer:hover,
+    .resizer.active {
+      background: #c9d8ee;
     }
 
     .brand {
@@ -468,6 +495,10 @@
         overflow: visible;
       }
 
+      .resizer {
+        display: none;
+      }
+
       .sidebar {
         min-height: auto;
         overflow: visible;
@@ -554,6 +585,8 @@
 
       <nav class="memo-list" id="memoList" aria-label="メモ一覧"></nav>
     </aside>
+
+    <div class="resizer" id="sidebarResizer" role="separator" aria-label="メモ一覧の幅を変更"></div>
 
     <main class="main">
       <header class="topbar">
@@ -666,10 +699,12 @@
     let activeId = state.memos[0]?.id || null;
     let promptParts = [];
     let saveTimer = null;
+    let resizingSidebar = false;
 
     const fields = {
       searchBox: $("searchBox"),
       filterCategory: $("filterCategory"),
+      sidebarResizer: $("sidebarResizer"),
       toggleFilterCategoryAdd: $("toggleFilterCategoryAdd"),
       filterCategoryAdd: $("filterCategoryAdd"),
       filterCategoryName: $("filterCategoryName"),
@@ -730,6 +765,39 @@
       fields.saveStatus.textContent = "保存済み";
       window.clearTimeout(saveTimer);
       saveTimer = window.setTimeout(() => fields.saveStatus.textContent = "自動保存", 1200);
+    }
+
+    function loadSidebarWidth() {
+      const saved = Number(localStorage.getItem("nounai-sidebar-width") || 360);
+      setSidebarWidth(saved);
+    }
+
+    function setSidebarWidth(width) {
+      const max = Math.max(320, Math.min(window.innerWidth * 0.55, 720));
+      const next = Math.max(240, Math.min(width, max));
+      document.documentElement.style.setProperty("--sidebar-width", `${next}px`);
+      localStorage.setItem("nounai-sidebar-width", String(Math.round(next)));
+    }
+
+    function startSidebarResize(event) {
+      resizingSidebar = true;
+      fields.sidebarResizer.classList.add("active");
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+      event.preventDefault();
+    }
+
+    function moveSidebarResize(event) {
+      if (!resizingSidebar) return;
+      setSidebarWidth(event.clientX);
+    }
+
+    function stopSidebarResize() {
+      if (!resizingSidebar) return;
+      resizingSidebar = false;
+      fields.sidebarResizer.classList.remove("active");
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
     }
 
     function createMemo(title = "無題メモ", description = "", body = "", categoryId = state?.categories?.[0]?.id || "es") {
@@ -1220,6 +1288,13 @@
     $("promptShowAll").addEventListener("click", showPromptOutput);
     $("promptCopy").addEventListener("click", () => copyText(fields.promptOutput.value || buildPromptText(), "プロンプトをコピーしました"));
     $("promptDownload").addEventListener("click", downloadPromptText);
+    fields.sidebarResizer.addEventListener("pointerdown", startSidebarResize);
+    window.addEventListener("pointermove", moveSidebarResize);
+    window.addEventListener("pointerup", stopSidebarResize);
+    window.addEventListener("resize", () => {
+      const current = Number(localStorage.getItem("nounai-sidebar-width") || 360);
+      setSidebarWidth(current);
+    });
 
     fields.promptBlocks.addEventListener("click", (event) => {
       const button = event.target.closest("button[data-action]");
@@ -1275,6 +1350,7 @@
     fields.bodyInput.addEventListener("input", () => mutateActive({ body: fields.bodyInput.value }));
     fields.categorySelect.addEventListener("change", () => mutateActive({ categoryId: fields.categorySelect.value }));
 
+    loadSidebarWidth();
     renderAll();
   </script>
 </body>
