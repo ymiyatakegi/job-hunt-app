@@ -26,11 +26,12 @@
 
     body {
       margin: 0;
-      min-height: 100vh;
+      height: 100vh;
       background: var(--bg);
       color: var(--ink);
       font-family: "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
       letter-spacing: 0;
+      overflow: hidden;
     }
 
     button, input, textarea, select {
@@ -44,7 +45,8 @@
     .app {
       display: grid;
       grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
-      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
     }
 
     .sidebar {
@@ -54,7 +56,8 @@
       padding: 18px;
       border-right: 1px solid var(--line);
       background: #eef2f8;
-      min-height: 100vh;
+      min-height: 0;
+      overflow: hidden;
     }
 
     .brand {
@@ -147,6 +150,7 @@
       align-content: start;
       grid-auto-rows: max-content;
       overflow: auto;
+      flex: 1 1 auto;
       min-height: 160px;
       padding-right: 2px;
     }
@@ -207,6 +211,8 @@
       display: grid;
       grid-template-rows: auto minmax(0, 1fr);
       min-width: 0;
+      min-height: 0;
+      overflow: hidden;
     }
 
     .topbar {
@@ -218,6 +224,18 @@
       border-bottom: 1px solid var(--line);
       background: rgba(255, 255, 255, 0.84);
       backdrop-filter: blur(12px);
+      min-width: 0;
+    }
+
+    .topbar > div:first-child {
+      min-width: 0;
+    }
+
+    #currentName, #currentMeta {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .status {
@@ -227,6 +245,7 @@
 
     .editor-wrap {
       overflow: auto;
+      min-height: 0;
       padding: 22px;
     }
 
@@ -234,7 +253,7 @@
       display: grid;
       gap: 16px;
       max-width: 1040px;
-      min-height: calc(100vh - 92px);
+      min-height: 0;
       margin: 0 auto;
       border: 1px solid color-mix(in srgb, var(--note-color) 65%, var(--line));
       border-top: 12px solid var(--note-color);
@@ -247,7 +266,7 @@
     .editor-empty {
       display: grid;
       place-items: center;
-      min-height: calc(100vh - 130px);
+      min-height: 240px;
       color: var(--muted);
       text-align: center;
     }
@@ -435,12 +454,22 @@
     }
 
     @media (max-width: 860px) {
+      body {
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+      }
+
       .app {
         grid-template-columns: 1fr;
+        height: auto;
+        min-height: 100vh;
+        overflow: visible;
       }
 
       .sidebar {
         min-height: auto;
+        overflow: visible;
         border-right: 0;
         border-bottom: 1px solid var(--line);
       }
