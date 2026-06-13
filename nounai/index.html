@@ -252,6 +252,8 @@
     .editor {
       display: grid;
       gap: 16px;
+      align-content: start;
+      grid-auto-rows: max-content;
       max-width: 1040px;
       min-height: 0;
       margin: 0 auto;
@@ -376,7 +378,8 @@
     }
 
     textarea.body {
-      min-height: 330px;
+      min-height: 260px;
+      height: 320px;
       resize: vertical;
       line-height: 1.72;
       font-family: "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
@@ -387,10 +390,8 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      position: sticky;
-      bottom: 0;
       padding-top: 10px;
-      background: linear-gradient(180deg, rgba(255,255,255,0), var(--panel) 35%);
+      background: var(--panel);
     }
 
     .counts {
