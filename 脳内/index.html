@@ -1,0 +1,1096 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>脳内メモ</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #6c7688;
+      --line: #dce2eb;
+      --accent: #246bfe;
+      --accent-ink: #ffffff;
+      --danger: #c93636;
+      --shadow: 0 16px 40px rgba(23, 32, 51, 0.10);
+      --note-color: #d9e8ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+      letter-spacing: 0;
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 18px;
+      border-right: 1px solid var(--line);
+      background: #eef2f8;
+      min-height: 100vh;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.2;
+    }
+
+    .primary {
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .filters {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .filter-category-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 43px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .icon-add {
+      width: 43px;
+      height: 43px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .quick-add {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 56px 58px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 11px;
+      background: #ffffff;
+      color: var(--ink);
+      outline: none;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(36, 107, 254, 0.14);
+    }
+
+    .memo-list {
+      display: grid;
+      gap: 8px;
+      align-content: start;
+      grid-auto-rows: max-content;
+      overflow: auto;
+      min-height: 160px;
+      padding-right: 2px;
+    }
+
+    .memo-item {
+      display: grid;
+      grid-template-columns: 9px minmax(0, 1fr);
+      gap: 10px;
+      align-items: stretch;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 6px 18px rgba(23, 32, 51, 0.05);
+      overflow: hidden;
+    }
+
+    .memo-item.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(36, 107, 254, 0.13);
+    }
+
+    .memo-button {
+      min-width: 0;
+      border: 0;
+      background: transparent;
+      text-align: left;
+      padding: 12px 12px 12px 0;
+      color: inherit;
+    }
+
+    .memo-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .memo-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .agent {
+      margin-top: auto;
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .agent-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 800;
+    }
+
+    .agent-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .agent-actions button {
+      padding: 8px 10px;
+    }
+
+    .agent textarea {
+      min-height: 86px;
+      resize: vertical;
+    }
+
+    .agent-output {
+      display: grid;
+      gap: 8px;
+      max-height: 220px;
+      overflow: auto;
+    }
+
+    .agent-hit {
+      border: 1px solid var(--line);
+      border-left-width: 7px;
+      border-radius: 8px;
+      padding: 9px 10px;
+      background: #fbfcff;
+    }
+
+    .agent-hit button {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      text-align: left;
+      color: inherit;
+    }
+
+    .agent-score {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .main {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-width: 0;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.84);
+      backdrop-filter: blur(12px);
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .editor-wrap {
+      overflow: auto;
+      padding: 22px;
+    }
+
+    .editor {
+      display: grid;
+      gap: 16px;
+      max-width: 1040px;
+      min-height: calc(100vh - 92px);
+      margin: 0 auto;
+      border: 1px solid color-mix(in srgb, var(--note-color) 65%, var(--line));
+      border-top: 12px solid var(--note-color);
+      border-radius: 8px;
+      padding: 20px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .editor-empty {
+      display: grid;
+      place-items: center;
+      min-height: calc(100vh - 130px);
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .title-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
+      gap: 14px;
+      align-items: end;
+    }
+
+    .title-input {
+      font-size: 26px;
+      font-weight: 900;
+      padding: 11px 12px;
+    }
+
+    .category-row {
+      display: grid;
+      grid-template-columns: minmax(180px, 280px) minmax(180px, 1fr) 92px 118px;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .color-chip {
+      width: 100%;
+      height: 43px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--note-color);
+    }
+
+    textarea.description {
+      min-height: 88px;
+      resize: vertical;
+    }
+
+    textarea.body {
+      min-height: 330px;
+      resize: vertical;
+      line-height: 1.72;
+      font-family: "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+    }
+
+    .editor-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      bottom: 0;
+      padding-top: 10px;
+      background: linear-gradient(180deg, rgba(255,255,255,0), var(--panel) 35%);
+    }
+
+    .counts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .secondary, .danger {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      background: #ffffff;
+      color: var(--ink);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .danger {
+      color: var(--danger);
+    }
+
+    .copy {
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 18px;
+      background: #101828;
+      color: #ffffff;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 10;
+      transform: translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      border-radius: 8px;
+      padding: 11px 14px;
+      background: #101828;
+      color: #ffffff;
+      box-shadow: var(--shadow);
+      transition: 160ms ease;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    @media (max-width: 860px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        min-height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .memo-list {
+        max-height: 280px;
+      }
+
+      .title-row, .category-row {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .editor-wrap {
+        padding: 14px;
+      }
+
+      .editor {
+        min-height: auto;
+        padding: 14px;
+      }
+
+      .title-input {
+        font-size: 21px;
+      }
+
+      .editor-footer {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .actions {
+        justify-content: stretch;
+      }
+
+      .actions button {
+        flex: 1 1 140px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>脳内メモ</h1>
+        <button class="primary" id="newMemo">新規メモ</button>
+      </div>
+
+      <section class="filters" aria-label="メモ絞り込み">
+        <div class="field">
+          <label for="searchBox">検索</label>
+          <input id="searchBox" type="search" placeholder="タイトル・用途・文面">
+        </div>
+        <div class="field">
+          <label for="filterCategory">色分けで絞り込み</label>
+          <div class="filter-category-row">
+            <select id="filterCategory"></select>
+            <button class="icon-add" id="toggleFilterCategoryAdd" title="色分けを追加" aria-label="色分けを追加">+</button>
+          </div>
+          <div class="quick-add" id="filterCategoryAdd" hidden>
+            <input id="filterCategoryName" placeholder="新しい色分け">
+            <input id="filterCategoryColor" type="color" value="#d9e8ff" aria-label="色選択">
+            <button class="secondary" id="addFilterCategory">追加</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="sortMode">並び替え</label>
+          <select id="sortMode">
+            <option value="updatedDesc">更新日が新しい順</option>
+            <option value="updatedAsc">更新日が古い順</option>
+            <option value="countDesc">更新回数が多い順</option>
+            <option value="titleAsc">タイトル順</option>
+          </select>
+        </div>
+      </section>
+
+      <nav class="memo-list" id="memoList" aria-label="メモ一覧"></nav>
+
+      <section class="agent" aria-label="自分専用AIエージェント">
+        <div class="agent-title">
+          <span>AIエージェント</span>
+          <div class="agent-actions">
+            <button class="secondary" id="agentSearch">探す</button>
+            <button class="primary" id="agentAsk">AI処理</button>
+          </div>
+        </div>
+        <textarea id="agentInput" placeholder="いま考えていること、AIに入れたい情報、探したい答えを書いてください"></textarea>
+        <div class="agent-output" id="agentOutput"></div>
+      </section>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <strong id="currentName">メモを選択してください</strong>
+          <div class="status" id="currentMeta">保存先: このブラウザ</div>
+        </div>
+        <div class="status" id="saveStatus">自動保存</div>
+      </header>
+
+      <div class="editor-wrap">
+        <section class="editor-empty" id="emptyState">
+          <div>左の「新規メモ」から作成できます。</div>
+        </section>
+
+        <section class="editor" id="editor" hidden>
+          <div class="title-row">
+            <div class="field">
+              <label for="titleInput">タイトル</label>
+              <input class="title-input" id="titleInput" placeholder="メモのタイトル">
+            </div>
+            <div class="field">
+              <label for="updatedAt">更新日時</label>
+              <input id="updatedAt" readonly>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="descriptionInput">用途説明</label>
+            <textarea class="description" id="descriptionInput" placeholder="このメモを何に使うか"></textarea>
+          </div>
+
+          <div class="category-row">
+            <div class="field">
+              <label for="categorySelect">色分け</label>
+              <select id="categorySelect"></select>
+            </div>
+            <div class="field">
+              <label for="newCategoryName">新しく追加</label>
+              <input id="newCategoryName" placeholder="例: 面接回答">
+            </div>
+            <div class="field">
+              <label for="newCategoryColor">色選択</label>
+              <input id="newCategoryColor" type="color" value="#d9e8ff">
+            </div>
+            <button class="secondary" id="addCategory">追加</button>
+          </div>
+
+          <div class="color-chip" id="colorPreview" title="このメモの色"></div>
+
+          <div class="field">
+            <label for="bodyInput">文面</label>
+            <textarea class="body" id="bodyInput" placeholder="AIにそのまま挿入したいプロンプト、考え、文章"></textarea>
+          </div>
+
+          <footer class="editor-footer">
+            <div class="counts">
+              <span id="charCount">0文字</span>
+              <span id="lineCount">0行</span>
+              <span id="updateCount">更新0回</span>
+              </div>
+              <div class="actions">
+                <button class="danger" id="deleteMemo">削除</button>
+                <button class="primary" id="commitUpdate">更新</button>
+                <button class="secondary" id="copyAll">全文コピー</button>
+                <button class="copy" id="copyBody">文面をそのままコピー</button>
+              </div>
+          </footer>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const STORE_KEY = "nounai-memo-v1";
+    const DEFAULT_CATEGORIES = [
+      { id: "es", name: "ESエピソード", color: "#d9e8ff" },
+      { id: "eval", name: "評価メモ", color: "#ffe3c7" }
+    ];
+
+    const $ = (id) => document.getElementById(id);
+    const state = loadState();
+    let activeId = state.memos[0]?.id || null;
+    let saveTimer = null;
+
+    const fields = {
+      searchBox: $("searchBox"),
+      filterCategory: $("filterCategory"),
+      toggleFilterCategoryAdd: $("toggleFilterCategoryAdd"),
+      filterCategoryAdd: $("filterCategoryAdd"),
+      filterCategoryName: $("filterCategoryName"),
+      filterCategoryColor: $("filterCategoryColor"),
+      addFilterCategory: $("addFilterCategory"),
+      sortMode: $("sortMode"),
+      memoList: $("memoList"),
+      editor: $("editor"),
+      emptyState: $("emptyState"),
+      currentName: $("currentName"),
+      currentMeta: $("currentMeta"),
+      saveStatus: $("saveStatus"),
+      titleInput: $("titleInput"),
+      updatedAt: $("updatedAt"),
+      descriptionInput: $("descriptionInput"),
+      categorySelect: $("categorySelect"),
+      newCategoryName: $("newCategoryName"),
+      newCategoryColor: $("newCategoryColor"),
+      addCategory: $("addCategory"),
+      colorPreview: $("colorPreview"),
+      bodyInput: $("bodyInput"),
+      charCount: $("charCount"),
+      lineCount: $("lineCount"),
+      updateCount: $("updateCount"),
+      commitUpdate: $("commitUpdate"),
+      toast: $("toast"),
+      agentInput: $("agentInput"),
+      agentAsk: $("agentAsk"),
+      agentOutput: $("agentOutput")
+    };
+
+    function uid(prefix) {
+      return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    function loadState() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(STORE_KEY));
+        if (parsed?.memos && parsed?.categories) return parsed;
+      } catch (_) {}
+      return {
+        categories: DEFAULT_CATEGORIES,
+        memos: [
+          createMemo("AI用プロンプト保管", "よく使うプロンプトや思考メモをここに保存します。", "ここに文面を書きます。", "es")
+        ]
+      };
+    }
+
+    function saveState() {
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+      fields.saveStatus.textContent = "保存済み";
+      window.clearTimeout(saveTimer);
+      saveTimer = window.setTimeout(() => fields.saveStatus.textContent = "自動保存", 1200);
+    }
+
+    function createMemo(title = "無題メモ", description = "", body = "", categoryId = state?.categories?.[0]?.id || "es") {
+      const now = new Date().toISOString();
+      return {
+        id: uid("memo"),
+        title,
+        description,
+        body,
+        categoryId,
+        createdAt: now,
+        updatedAt: now,
+        updateCount: 0
+      };
+    }
+
+    function activeMemo() {
+      return state.memos.find((memo) => memo.id === activeId) || null;
+    }
+
+    function categoryById(id) {
+      return state.categories.find((category) => category.id === id) || state.categories[0];
+    }
+
+    function formatDate(iso) {
+      const date = new Date(iso);
+      return new Intl.DateTimeFormat("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).format(date);
+    }
+
+    function renderCategoryOptions() {
+      const options = state.categories
+        .map((category) => `<option value="${escapeHtml(category.id)}">${escapeHtml(category.name)}</option>`)
+        .join("");
+      fields.categorySelect.innerHTML = options;
+      fields.filterCategory.innerHTML = `<option value="all">すべて</option>${options}`;
+    }
+
+    function filteredMemos() {
+      const query = fields.searchBox.value.trim().toLowerCase();
+      const categoryId = fields.filterCategory.value;
+      const sortMode = fields.sortMode.value;
+      return state.memos
+        .filter((memo) => categoryId === "all" || memo.categoryId === categoryId)
+        .filter((memo) => {
+          if (!query) return true;
+          return [memo.title, memo.description, memo.body].join("\n").toLowerCase().includes(query);
+        })
+        .sort((a, b) => {
+          if (sortMode === "updatedAsc") return new Date(a.updatedAt) - new Date(b.updatedAt);
+          if (sortMode === "countDesc") return b.updateCount - a.updateCount;
+          if (sortMode === "titleAsc") return a.title.localeCompare(b.title, "ja");
+          return new Date(b.updatedAt) - new Date(a.updatedAt);
+        });
+    }
+
+    function renderList() {
+      const memos = filteredMemos();
+      fields.memoList.innerHTML = memos.length
+        ? memos.map((memo) => {
+            const category = categoryById(memo.categoryId);
+            return `
+              <article class="memo-item ${memo.id === activeId ? "active" : ""}">
+                <div style="background:${escapeAttr(category.color)}"></div>
+                <button class="memo-button" data-id="${escapeAttr(memo.id)}">
+                  <div class="memo-title">${escapeHtml(memo.title || "無題メモ")}</div>
+                  <div class="memo-meta">
+                    <span>${escapeHtml(formatDate(memo.updatedAt))}</span>
+                    <span>${memo.updateCount}回</span>
+                  </div>
+                </button>
+              </article>
+            `;
+          }).join("")
+        : `<div class="status">条件に合うメモがありません。</div>`;
+    }
+
+    function renderEditor() {
+      const memo = activeMemo();
+      fields.editor.hidden = !memo;
+      fields.emptyState.hidden = Boolean(memo);
+      if (!memo) {
+        fields.currentName.textContent = "メモを選択してください";
+        fields.currentMeta.textContent = "保存先: このブラウザ";
+        return;
+      }
+      const category = categoryById(memo.categoryId);
+      fields.editor.style.setProperty("--note-color", category.color);
+      fields.titleInput.value = memo.title;
+      fields.updatedAt.value = formatDate(memo.updatedAt);
+      fields.descriptionInput.value = memo.description;
+      fields.categorySelect.value = memo.categoryId;
+      fields.bodyInput.value = memo.body;
+      fields.colorPreview.style.background = category.color;
+      fields.currentName.textContent = memo.title || "無題メモ";
+      fields.currentMeta.textContent = `${category.name} / 更新 ${formatDate(memo.updatedAt)}`;
+      updateCounts();
+    }
+
+    function renderAll() {
+      renderCategoryOptions();
+      renderList();
+      renderEditor();
+    }
+
+    function updateCounts() {
+      const memo = activeMemo();
+      const body = fields.bodyInput.value;
+      fields.charCount.textContent = `${body.length}文字`;
+      fields.lineCount.textContent = `${body ? body.split(/\r\n|\r|\n/).length : 0}行`;
+      fields.updateCount.textContent = `更新${memo?.updateCount || 0}回`;
+    }
+
+    function mutateActive(changes) {
+      const memo = activeMemo();
+      if (!memo) return;
+      Object.assign(memo, changes);
+      saveState();
+      renderList();
+      renderEditorHeader();
+      updateCounts();
+    }
+
+    function commitActiveUpdate() {
+      const memo = activeMemo();
+      if (!memo) return;
+      memo.updatedAt = new Date().toISOString();
+      memo.updateCount += 1;
+      saveState();
+      renderList();
+      renderEditor();
+      showToast("更新しました");
+    }
+
+    function renderEditorHeader() {
+      const memo = activeMemo();
+      if (!memo) return;
+      const category = categoryById(memo.categoryId);
+      fields.editor.style.setProperty("--note-color", category.color);
+      fields.colorPreview.style.background = category.color;
+      fields.currentName.textContent = memo.title || "無題メモ";
+      fields.currentMeta.textContent = `${category.name} / 更新 ${formatDate(memo.updatedAt)}`;
+    }
+
+    function addMemo() {
+      const selectedFilter = fields.filterCategory.value;
+      const categoryId = selectedFilter && selectedFilter !== "all" ? selectedFilter : state.categories[0]?.id;
+      const memo = createMemo("無題メモ", "", "", categoryId);
+      state.memos.unshift(memo);
+      activeId = memo.id;
+      saveState();
+      renderAll();
+      fields.titleInput.focus();
+      fields.titleInput.select();
+    }
+
+    function addCategory() {
+      const category = createCategory(fields.newCategoryName.value, fields.newCategoryColor.value);
+      if (!category) return;
+      state.categories.push(category);
+      fields.newCategoryName.value = "";
+      const memo = activeMemo();
+      if (memo) {
+        memo.categoryId = category.id;
+      }
+      saveState();
+      renderAll();
+    }
+
+    function addFilterCategory() {
+      const category = createCategory(fields.filterCategoryName.value, fields.filterCategoryColor.value);
+      if (!category) return;
+      state.categories.push(category);
+      fields.filterCategoryName.value = "";
+      fields.filterCategory.value = category.id;
+      saveState();
+      renderAll();
+      fields.filterCategory.value = category.id;
+      renderList();
+      showToast("色分けを追加しました");
+    }
+
+    function createCategory(rawName, color) {
+      const name = rawName.trim();
+      if (!name) {
+        showToast("色分け名を入力してください");
+        return null;
+      }
+      if (state.categories.some((category) => category.name === name)) {
+        showToast("同じ名前の色分けがあります");
+        return null;
+      }
+      return {
+        id: uid("cat"),
+        name,
+        color
+      };
+    }
+
+    function deleteMemo() {
+      const memo = activeMemo();
+      if (!memo) return;
+      if (!confirm(`「${memo.title || "無題メモ"}」を削除しますか？`)) return;
+      state.memos = state.memos.filter((item) => item.id !== memo.id);
+      activeId = state.memos[0]?.id || null;
+      saveState();
+      renderAll();
+    }
+
+    async function copyText(text, message) {
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (_) {
+        const temp = document.createElement("textarea");
+        temp.value = text;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand("copy");
+        temp.remove();
+      }
+      showToast(message);
+    }
+
+    function copyAll() {
+      const memo = activeMemo();
+      if (!memo) return;
+      const category = categoryById(memo.categoryId);
+      copyText([
+        `タイトル: ${memo.title}`,
+        `用途説明: ${memo.description}`,
+        `色分け: ${category.name}`,
+        `更新日時: ${formatDate(memo.updatedAt)}`,
+        "",
+        memo.body
+      ].join("\n"), "メモ全体をコピーしました");
+    }
+
+    function copyBody() {
+      const memo = activeMemo();
+      if (!memo) return;
+      copyText(memo.body, "文面をそのままコピーしました");
+    }
+
+    function runAgent() {
+      const query = fields.agentInput.value.trim();
+      if (!query) {
+        fields.agentOutput.innerHTML = `<div class="status">入力すると近いメモを探します。</div>`;
+        return;
+      }
+      const terms = tokenize(query);
+      const scored = state.memos
+        .map((memo) => {
+          const text = `${memo.title}\n${memo.description}\n${memo.body}`.toLowerCase();
+          const score = terms.reduce((sum, term) => sum + occurrences(text, term), 0);
+          return { memo, score };
+        })
+        .filter((item) => item.score > 0)
+        .sort((a, b) => b.score - a.score || new Date(b.memo.updatedAt) - new Date(a.memo.updatedAt))
+        .slice(0, 5);
+
+      if (!scored.length) {
+        fields.agentOutput.innerHTML = `<div class="status">一致しそうなメモは見つかりませんでした。</div>`;
+        return;
+      }
+
+      fields.agentOutput.innerHTML = scored.map(({ memo, score }) => {
+        const category = categoryById(memo.categoryId);
+        const reason = makeReason(query, memo);
+        return `
+          <article class="agent-hit" style="border-left-color:${escapeAttr(category.color)}">
+            <button data-agent-id="${escapeAttr(memo.id)}">
+              <strong>${escapeHtml(memo.title || "無題メモ")}</strong>
+              <div class="agent-score">${escapeHtml(category.name)} / 関連度 ${score}</div>
+              <div class="agent-score">${escapeHtml(reason)}</div>
+            </button>
+          </article>
+        `;
+      }).join("");
+    }
+
+    async function askOpenAI() {
+      const query = fields.agentInput.value.trim();
+      if (!query) {
+        showToast("AIに聞きたい内容を入力してください");
+        return;
+      }
+      fields.agentAsk.disabled = true;
+      fields.agentAsk.textContent = "処理中";
+      fields.agentOutput.innerHTML = `<div class="status">AIで整理しています。</div>`;
+      try {
+        const response = await fetch("/api/agent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query,
+            activeMemo: activeMemo(),
+            memos: state.memos.map((memo) => ({
+              title: memo.title,
+              description: memo.description,
+              body: memo.body,
+              category: categoryById(memo.categoryId).name,
+              updatedAt: memo.updatedAt,
+              updateCount: memo.updateCount
+            }))
+          })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "AI処理に失敗しました");
+        fields.agentOutput.innerHTML = `
+          <article class="agent-hit" style="border-left-color:#246bfe">
+            <strong>AI処理結果</strong>
+            <div class="agent-score">${escapeHtml(data.model || "OpenAI")}</div>
+            <div style="white-space:pre-wrap; line-height:1.65; margin-top:8px;">${escapeHtml(data.result)}</div>
+          </article>
+        `;
+      } catch (error) {
+        fields.agentOutput.innerHTML = `
+          <div class="status">
+            ${escapeHtml(error.message)}
+            <br>API連携を使うには、このHTMLを server.js から起動してください。
+          </div>
+        `;
+      } finally {
+        fields.agentAsk.disabled = false;
+        fields.agentAsk.textContent = "AI処理";
+      }
+    }
+
+    function tokenize(text) {
+      const normalized = text.toLowerCase().replace(/[、。,.!?！？「」『』（）()[\]{}]/g, " ");
+      const chunks = normalized.split(/\s+/).filter(Boolean);
+      const japaneseChunks = normalized.match(/[ぁ-んァ-ヶー一-龠a-z0-9]{2,}/g) || [];
+      return Array.from(new Set([...chunks, ...japaneseChunks])).filter((term) => term.length >= 2);
+    }
+
+    function occurrences(text, term) {
+      let count = 0;
+      let index = text.indexOf(term);
+      while (index !== -1) {
+        count += term.length >= 4 ? 2 : 1;
+        index = text.indexOf(term, index + term.length);
+      }
+      return count;
+    }
+
+    function makeReason(query, memo) {
+      const fields = [
+        ["タイトル", memo.title],
+        ["用途説明", memo.description],
+        ["文面", memo.body]
+      ];
+      const terms = tokenize(query);
+      for (const [label, value] of fields) {
+        const hit = terms.find((term) => value.toLowerCase().includes(term));
+        if (hit) return `${label}に「${hit}」が含まれています。`;
+      }
+      return "入力内容と近い単語が複数見つかりました。";
+    }
+
+    function showToast(message) {
+      fields.toast.textContent = message;
+      fields.toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => fields.toast.classList.remove("show"), 1800);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value);
+    }
+
+    $("newMemo").addEventListener("click", addMemo);
+    $("deleteMemo").addEventListener("click", deleteMemo);
+    $("commitUpdate").addEventListener("click", commitActiveUpdate);
+    $("copyAll").addEventListener("click", copyAll);
+    $("copyBody").addEventListener("click", copyBody);
+    $("addCategory").addEventListener("click", addCategory);
+    $("toggleFilterCategoryAdd").addEventListener("click", () => {
+      fields.filterCategoryAdd.hidden = !fields.filterCategoryAdd.hidden;
+      if (!fields.filterCategoryAdd.hidden) fields.filterCategoryName.focus();
+    });
+    $("addFilterCategory").addEventListener("click", addFilterCategory);
+    $("agentSearch").addEventListener("click", runAgent);
+    $("agentAsk").addEventListener("click", askOpenAI);
+
+    fields.memoList.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-id]");
+      if (!button) return;
+      activeId = button.dataset.id;
+      renderList();
+      renderEditor();
+    });
+
+    fields.agentOutput.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-agent-id]");
+      if (!button) return;
+      activeId = button.dataset.agentId;
+      renderList();
+      renderEditor();
+    });
+
+    fields.searchBox.addEventListener("input", renderList);
+    fields.filterCategory.addEventListener("change", renderList);
+    fields.sortMode.addEventListener("change", renderList);
+    fields.agentInput.addEventListener("input", () => {
+      window.clearTimeout(fields.agentInput.timer);
+      fields.agentInput.timer = window.setTimeout(runAgent, 300);
+    });
+
+    fields.titleInput.addEventListener("input", () => mutateActive({ title: fields.titleInput.value }));
+    fields.descriptionInput.addEventListener("input", () => mutateActive({ description: fields.descriptionInput.value }));
+    fields.bodyInput.addEventListener("input", () => mutateActive({ body: fields.bodyInput.value }));
+    fields.categorySelect.addEventListener("change", () => mutateActive({ categoryId: fields.categorySelect.value }));
+
+    renderAll();
+    runAgent();
+  </script>
+</body>
+</html>
